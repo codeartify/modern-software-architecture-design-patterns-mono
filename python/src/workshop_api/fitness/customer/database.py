@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 try:
@@ -41,12 +42,19 @@ def get_db_session() -> Generator[Session]:
 
 def init_db() -> None:
     from workshop_api.fitness.customer.models import CustomerOrmModel
+    from workshop_api.fitness.membership.exercise00_mixed.models import E00MembershipOrmModel
     from workshop_api.fitness.plan.models import PlanOrmModel
 
-    Base.metadata.create_all(
-        bind=engine,
-        tables=[
-            CustomerOrmModel.__table__,
-            PlanOrmModel.__table__,
-        ],
-    )
+    try:
+        Base.metadata.create_all(
+            bind=engine,
+            tables=[
+                CustomerOrmModel.__table__,
+                PlanOrmModel.__table__,
+                E00MembershipOrmModel.__table__,
+            ],
+        )
+    except OperationalError as error:
+        if "readonly" in str(error).lower():
+            return
+        raise

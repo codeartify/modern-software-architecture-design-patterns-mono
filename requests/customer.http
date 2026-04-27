@@ -6,7 +6,7 @@ Accept: application/json
 {
   "name": "Oliver Zihler",
   "dateOfBirth": "2016-08-13",
-  "emailAddress": "ozihlewrw1@gmail.com"
+  "emailAddress": "ozihlewwrw1@gmail.com"
 }
 
 > {%

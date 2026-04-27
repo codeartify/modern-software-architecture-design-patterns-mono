@@ -1,1 +1,1 @@
-"""Exercise 00 mixed baseline placeholder."""
+"""Exercise 00 mixed baseline."""
