@@ -75,23 +75,25 @@ public class E00MembershipController {
                 LocalDate.now().plusDays(30)
         );
 
+        var externalInvoiceRequest = new ExternalInvoiceProviderUpsertRequest(
+                invoice.customerId(),
+                invoice.membershipId(),
+                invoice.amount(),
+                "CHF",
+                invoice.dueDate(),
+                ExternalInvoiceProviderStatus.OPEN,
+                "Membership invoice for %s".formatted(plan.getTitle()),
+                invoice.id(),
+                Map.of(
+                        "exercise", "e00",
+                        "planId", membership.getPlanId()
+                )
+        );
+
         var externalInvoice = restClient.post()
                 .uri("/api/shared/external-invoice-provider/invoices")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new ExternalInvoiceProviderUpsertRequest(
-                        invoice.customerId(),
-                        invoice.membershipId(),
-                        invoice.amount(),
-                        "CHF",
-                        invoice.dueDate(),
-                        ExternalInvoiceProviderStatus.OPEN,
-                        "Membership invoice for %s".formatted(plan.getTitle()),
-                        invoice.id(),
-                        Map.of(
-                                "exercise", "e00",
-                                "planId", membership.getPlanId()
-                        )
-                ))
+                .body(externalInvoiceRequest)
                 .retrieve()
                 .body(ExternalInvoiceProviderResponse.class);
 
