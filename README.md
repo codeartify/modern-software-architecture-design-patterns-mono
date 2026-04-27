@@ -12,11 +12,17 @@ Monorepo for a workshop that keeps the same application shape in two stacks:
 ├── java
 │   ├── pom.xml
 │   └── src
+├── requests
+│   ├── health.http
+│   └── store-demo.http
 └── python
     ├── pyproject.toml
     ├── src
     └── tests
 ```
+
+## Workshop Exercise Structure
+The `E00` to `E06` prefixes are intentional. In production many types would have simpler names, but in this workshop repo the prefixes keep IDE search results clear when multiple architecture styles implement the same use case.
 
 ## Java
 
@@ -87,6 +93,7 @@ Select the environment before running the request:
 
 - `java` -> `http://localhost:8080`
 - `python` -> `http://localhost:9090`
+
 
 ## CI
 
