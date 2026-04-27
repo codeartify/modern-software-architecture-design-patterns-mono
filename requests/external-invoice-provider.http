@@ -1,0 +1,54 @@
+### Create external invoice
+POST {{baseUrl}}/api/shared/external-invoice-provider/invoices
+Content-Type: application/json
+Accept: application/json
+
+{
+  "customerReference": "customer-adult-1",
+  "contractReference": "membership-001",
+  "amountInCents": 99900,
+  "currency": "CHF",
+  "dueDate": "2026-05-27",
+  "status": "OPEN",
+  "description": "Annual membership invoice",
+  "externalCorrelationId": "activation-123",
+  "metadata": {
+    "origin": "fitness-system"
+  }
+}
+
+> {%
+  client.global.set("externalInvoiceId", response.body.invoiceId);
+%}
+
+### List external invoices
+GET {{baseUrl}}/api/shared/external-invoice-provider/invoices
+Accept: application/json
+
+### Get external invoice by id
+GET {{baseUrl}}/api/shared/external-invoice-provider/invoices/{{externalInvoiceId}}
+Accept: application/json
+
+### Update external invoice
+PUT {{baseUrl}}/api/shared/external-invoice-provider/invoices/{{externalInvoiceId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "customerReference": "customer-adult-1",
+  "contractReference": "membership-001",
+  "amountInCents": 99900,
+  "currency": "CHF",
+  "dueDate": "2026-05-27",
+  "status": "PAID",
+  "description": "Annual membership invoice paid",
+  "externalCorrelationId": "payment-456",
+  "metadata": {
+    "origin": "fitness-system",
+    "paymentReference": "pay-123"
+  }
+}
+
+### Delete external invoice
+DELETE {{baseUrl}}/api/shared/external-invoice-provider/invoices/{{externalInvoiceId}}
+Accept: application/json
