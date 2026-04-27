@@ -8,6 +8,9 @@ public record E00ActivateMembershipResponse(
         String planId,
         int planPrice,
         int planDuration,
+        String status,
+        LocalDate startDate,
+        LocalDate endDate,
         String invoiceId,
         String externalInvoiceId,
         LocalDate invoiceDueDate

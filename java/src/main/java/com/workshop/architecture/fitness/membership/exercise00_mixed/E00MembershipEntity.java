@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -26,15 +26,36 @@ public class E00MembershipEntity {
     @Column(nullable = false)
     private int planDuration;
 
+    @Column(nullable = false)
+    private String status;
+
+    @Column(nullable = false)
+    private LocalDate startDate;
+
+    @Column(nullable = false)
+    private LocalDate endDate;
+
     protected E00MembershipEntity() {
     }
 
-    public E00MembershipEntity(UUID id, String customerId, String planId, int planPrice, int planDuration) {
+    public E00MembershipEntity(
+            UUID id,
+            String customerId,
+            String planId,
+            int planPrice,
+            int planDuration,
+            String status,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
         this.id = id;
         this.customerId = customerId;
         this.planId = planId;
         this.planPrice = planPrice;
         this.planDuration = planDuration;
+        this.status = status;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     public UUID getId() {
@@ -55,5 +76,17 @@ public class E00MembershipEntity {
 
     public int getPlanDuration() {
         return planDuration;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
     }
 }

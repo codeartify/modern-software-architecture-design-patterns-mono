@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record E00ActivateMembershipRequest(
         @NotBlank String customerId,
-        @NotBlank String planId
+        @NotBlank String planId,
+        Boolean signedByCustodian
 ) {
 }

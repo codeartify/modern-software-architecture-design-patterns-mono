@@ -10,6 +10,7 @@ import com.workshop.architecture.fitness.plan.PlanEntity;
 import com.workshop.architecture.fitness.plan.PlanRepository;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +58,8 @@ public class E00MembershipController {
         E00MembershipEntity membership;
         E00Invoice invoice;
         String email;
+        LocalDate startDate;
+        LocalDate endDate;
 
         customer = customerRepository.findById(UUID.fromString(request.customerId()))
                 .orElseThrow(() -> new ResponseStatusException(
@@ -70,12 +73,26 @@ public class E00MembershipController {
                         "Plan %s was not found".formatted(request.planId())
                 ));
 
+        startDate = LocalDate.now();
+        endDate = startDate.plusMonths(plan.getDurationInMonths());
+
+        if (Period.between(customer.getDateOfBirth(), startDate).getYears() < 18
+                && !Boolean.TRUE.equals(request.signedByCustodian())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Customers younger than 18 require signedByCustodian=true"
+            );
+        }
+
         membership = membershipRepository.save(new E00MembershipEntity(
                 UUID.randomUUID(),
                 request.customerId(),
                 request.planId(),
                 plan.getPrice().intValue(),
-                plan.getDurationInMonths()
+                plan.getDurationInMonths(),
+                "ACTIVE",
+                startDate,
+                endDate
         ));
 
         invoice = new E00Invoice(
@@ -147,6 +164,9 @@ public class E00MembershipController {
                 membership.getPlanId(),
                 membership.getPlanPrice(),
                 membership.getPlanDuration(),
+                membership.getStatus(),
+                membership.getStartDate(),
+                membership.getEndDate(),
                 invoice.id(),
                 externalInvoice == null ? null : externalInvoice.invoiceId(),
                 invoice.dueDate()
