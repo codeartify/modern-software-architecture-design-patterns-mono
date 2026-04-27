@@ -1,0 +1,39 @@
+### Create plan
+POST {{baseUrl}}/api/shared/plans
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Premium 12 Months",
+  "description": "Twelve months for regular training",
+  "durationInMonths": 12,
+  "price": 999.00
+}
+
+> {%
+  client.global.set("planId", response.body.id);
+%}
+
+### List plans
+GET {{baseUrl}}/api/shared/plans
+Accept: application/json
+
+### Get plan by id
+GET {{baseUrl}}/api/shared/plans/{{planId}}
+Accept: application/json
+
+### Update plan
+PUT {{baseUrl}}/api/shared/plans/{{planId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Premium 24 Months",
+  "description": "Twenty-four months for long-term training",
+  "durationInMonths": 24,
+  "price": 1699.00
+}
+
+### Delete plan
+DELETE {{baseUrl}}/api/shared/plans/{{planId}}
+Accept: application/json
