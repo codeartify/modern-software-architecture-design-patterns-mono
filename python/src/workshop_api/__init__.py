@@ -1,0 +1,1 @@
+"""Workshop FastAPI application package."""
