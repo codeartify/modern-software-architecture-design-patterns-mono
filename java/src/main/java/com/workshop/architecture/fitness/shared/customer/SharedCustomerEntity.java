@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "shared_customers")
+@Table(name = "customers")
 public class SharedCustomerEntity {
 
     @Id

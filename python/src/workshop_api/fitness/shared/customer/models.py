@@ -8,7 +8,7 @@ from workshop_api.fitness.shared.customer.database import Base
 
 
 class SharedCustomerOrmModel(Base):
-    __tablename__ = "shared_customers"
+    __tablename__ = "customers"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(255), nullable=False)
