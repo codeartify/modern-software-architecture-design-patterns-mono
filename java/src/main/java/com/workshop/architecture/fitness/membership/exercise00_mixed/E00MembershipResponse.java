@@ -9,6 +9,7 @@ public record E00MembershipResponse(
         int planPrice,
         int planDuration,
         String status,
+        String reason,
         LocalDate startDate,
         LocalDate endDate
 ) {
@@ -20,6 +21,7 @@ public record E00MembershipResponse(
                 entity.getPlanPrice(),
                 entity.getPlanDuration(),
                 entity.getStatus(),
+                entity.getReason(),
                 entity.getStartDate(),
                 entity.getEndDate()
         );

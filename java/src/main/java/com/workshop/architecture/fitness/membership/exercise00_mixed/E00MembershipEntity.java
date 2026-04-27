@@ -29,6 +29,9 @@ public class E00MembershipEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column
+    private String reason;
+
     @Column(nullable = false)
     private LocalDate startDate;
 
@@ -45,6 +48,7 @@ public class E00MembershipEntity {
             int planPrice,
             int planDuration,
             String status,
+            String reason,
             LocalDate startDate,
             LocalDate endDate
     ) {
@@ -54,6 +58,7 @@ public class E00MembershipEntity {
         this.planPrice = planPrice;
         this.planDuration = planDuration;
         this.status = status;
+        this.reason = reason;
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -82,6 +87,10 @@ public class E00MembershipEntity {
         return status;
     }
 
+    public String getReason() {
+        return reason;
+    }
+
     public LocalDate getStartDate() {
         return startDate;
     }
@@ -92,5 +101,10 @@ public class E00MembershipEntity {
 
     public void suspend() {
         this.status = "SUSPENDED";
+    }
+
+    public void suspendForNonPayment() {
+        this.status = "SUSPENDED";
+        this.reason = "NON_PAYMENT";
     }
 }

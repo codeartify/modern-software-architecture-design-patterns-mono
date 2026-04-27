@@ -9,8 +9,13 @@ import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoi
 import com.workshop.architecture.fitness.plan.PlanEntity;
 import com.workshop.architecture.fitness.plan.PlanRepository;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,6 +97,7 @@ public class E00MembershipController {
                 plan.getPrice().intValue(),
                 plan.getDurationInMonths(),
                 "ACTIVE",
+                null,
                 startDate,
                 endDate
         ));
@@ -192,5 +198,49 @@ public class E00MembershipController {
         membership.suspend();
         membership = membershipRepository.save(membership);
         return E00MembershipResponse.fromEntity(membership);
+    }
+
+    @PostMapping("/suspend-overdue")
+    E00SuspendOverdueMembershipsResponse suspendOverdueMemberships(
+            @RequestBody(required = false) E00SuspendOverdueMembershipsRequest request
+    ) {
+        Instant checkedAt = request == null || request.checkedAt() == null ? Instant.now() : request.checkedAt();
+        LocalDate checkedAtDate = checkedAt.atZone(ZoneOffset.UTC).toLocalDate();
+        List<E00MembershipEntity> memberships = membershipRepository.findAll();
+        ExternalInvoiceProviderResponse[] invoiceResponses = restClient.get()
+                .uri("/api/shared/external-invoice-provider/invoices")
+                .retrieve()
+                .body(ExternalInvoiceProviderResponse[].class);
+        List<ExternalInvoiceProviderResponse> externalInvoices = invoiceResponses == null
+                ? List.of()
+                : Arrays.asList(invoiceResponses);
+        List<String> suspendedMembershipIds = new ArrayList<>();
+        int checkedMemberships = 0;
+
+        for (E00MembershipEntity membership : memberships) {
+            if (!"ACTIVE".equals(membership.getStatus())) {
+                continue;
+            }
+
+            checkedMemberships++;
+
+            boolean hasOverdueUnpaidInvoice = externalInvoices.stream().anyMatch(invoice ->
+                    membership.getId().toString().equals(invoice.contractReference())
+                            && invoice.status() == ExternalInvoiceProviderStatus.OPEN
+                            && invoice.dueDate().isBefore(checkedAtDate)
+            );
+
+            if (hasOverdueUnpaidInvoice) {
+                membership.suspendForNonPayment();
+                membershipRepository.save(membership);
+                suspendedMembershipIds.add(membership.getId().toString());
+            }
+        }
+
+        return new E00SuspendOverdueMembershipsResponse(
+                checkedAt,
+                checkedMemberships,
+                suspendedMembershipIds
+        );
     }
 }

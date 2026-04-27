@@ -16,3 +16,12 @@ Accept: application/json
 ### Suspend membership
 POST {{baseUrl}}/api/e00/memberships/{{membershipId}}/suspend
 Accept: application/json
+
+### Suspend overdue memberships
+POST {{baseUrl}}/api/e00/memberships/suspend-overdue
+Content-Type: application/json
+Accept: application/json
+
+{
+  "checkedAt": "2026-04-27T10:00:00Z"
+}
