@@ -1,7 +1,0 @@
-package com.workshop.architecture.fitness.shared.customer;
-
-import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface SharedCustomerRepository extends JpaRepository<SharedCustomerEntity, UUID> {
-}
