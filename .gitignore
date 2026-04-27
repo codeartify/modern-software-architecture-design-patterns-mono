@@ -3,6 +3,8 @@
 
 # Java / Maven
 java/target/
+database/*.mv.db
+database/*.trace.db
 
 # Python
 python/.venv/

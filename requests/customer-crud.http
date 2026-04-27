@@ -1,0 +1,37 @@
+### Create customer
+POST {{baseUrl}}/api/shared/customers
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Ada Example",
+  "dateOfBirth": "1986-08-13",
+  "emailAddress": "ada@example.com"
+}
+
+> {%
+  client.global.set("customerId", response.body.id);
+%}
+
+### List customers
+GET {{baseUrl}}/api/shared/customers
+Accept: application/json
+
+### Get customer by id
+GET {{baseUrl}}/api/shared/customers/{{customerId}}
+Accept: application/json
+
+### Update customer
+PUT {{baseUrl}}/api/shared/customers/{{customerId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Ada Lovelace",
+  "dateOfBirth": "1986-08-13",
+  "emailAddress": "ada.lovelace@example.com"
+}
+
+### Delete customer
+DELETE {{baseUrl}}/api/shared/customers/{{customerId}}
+Accept: application/json
