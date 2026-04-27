@@ -1,10 +1,12 @@
 package com.workshop.architecture.fitness.membership.exercise00_mixed;
 
+import com.workshop.architecture.fitness.customer.CustomerEntity;
 import com.workshop.architecture.fitness.customer.CustomerRepository;
 import com.workshop.architecture.fitness.email.InMemoryEmailService;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderResponse;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStatus;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
+import com.workshop.architecture.fitness.plan.PlanEntity;
 import com.workshop.architecture.fitness.plan.PlanRepository;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -29,6 +31,7 @@ public class E00MembershipController {
     private final PlanRepository planRepository;
     private final InMemoryEmailService emailService;
     private final RestClient restClient;
+    private final String billingSenderEmailAddress;
 
     public E00MembershipController(
             E00MembershipRepository membershipRepository,
@@ -36,30 +39,38 @@ public class E00MembershipController {
             PlanRepository planRepository,
             InMemoryEmailService emailService,
             RestClient.Builder restClientBuilder,
-            @Value("${workshop.external-invoice-provider.base-url}") String externalInvoiceProviderBaseUrl
+            @Value("${workshop.external-invoice-provider.base-url}") String externalInvoiceProviderBaseUrl,
+            @Value("${workshop.billing.sender-email-address}") String billingSenderEmailAddress
     ) {
         this.membershipRepository = membershipRepository;
         this.customerRepository = customerRepository;
         this.planRepository = planRepository;
         this.emailService = emailService;
         this.restClient = restClientBuilder.baseUrl(externalInvoiceProviderBaseUrl).build();
+        this.billingSenderEmailAddress = billingSenderEmailAddress;
     }
 
     @PostMapping("/activate")
     E00ActivateMembershipResponse activateMembership(@Valid @RequestBody E00ActivateMembershipRequest request) {
-        var customer = customerRepository.findById(UUID.fromString(request.customerId()))
+        CustomerEntity customer;
+        PlanEntity plan;
+        E00MembershipEntity membership;
+        E00Invoice invoice;
+        String email;
+
+        customer = customerRepository.findById(UUID.fromString(request.customerId()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Customer %s was not found".formatted(request.customerId())
                 ));
 
-        var plan = planRepository.findById(UUID.fromString(request.planId()))
+        plan = planRepository.findById(UUID.fromString(request.planId()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Plan %s was not found".formatted(request.planId())
                 ));
 
-        var membership = membershipRepository.save(new E00MembershipEntity(
+        membership = membershipRepository.save(new E00MembershipEntity(
                 UUID.randomUUID(),
                 request.customerId(),
                 request.planId(),
@@ -67,7 +78,7 @@ public class E00MembershipController {
                 plan.getDurationInMonths()
         ));
 
-        var invoice = new E00Invoice(
+        invoice = new E00Invoice(
                 UUID.randomUUID().toString(),
                 membership.getId().toString(),
                 request.customerId(),
@@ -75,32 +86,31 @@ public class E00MembershipController {
                 LocalDate.now().plusDays(30)
         );
 
-        var externalInvoiceRequest = new ExternalInvoiceProviderUpsertRequest(
-                invoice.customerId(),
-                invoice.membershipId(),
-                invoice.amount(),
-                "CHF",
-                invoice.dueDate(),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Membership invoice for %s".formatted(plan.getTitle()),
-                invoice.id(),
-                Map.of(
-                        "exercise", "e00",
-                        "planId", membership.getPlanId()
-                )
-        );
 
         var externalInvoice = restClient.post()
                 .uri("/api/shared/external-invoice-provider/invoices")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(externalInvoiceRequest)
+                .body(new ExternalInvoiceProviderUpsertRequest(
+                        invoice.customerId(),
+                        invoice.membershipId(),
+                        invoice.amount(),
+                        "CHF",
+                        invoice.dueDate(),
+                        ExternalInvoiceProviderStatus.OPEN,
+                        "Membership invoice for %s".formatted(plan.getTitle()),
+                        invoice.id(),
+                        Map.of(
+                                "exercise", "e00",
+                                "planId", membership.getPlanId()
+                        )
+                ))
                 .retrieve()
                 .body(ExternalInvoiceProviderResponse.class);
 
-        String email = """
+        email = """
                 |
                 |To: %s
-                |From: billing@codeartify.com
+                |From: %s
                 |Subject: Your Membership Invoice %s
                 |
                 |Dear customer,
@@ -119,6 +129,7 @@ public class E00MembershipController {
                 |
                 """.formatted(
                 customer.getEmailAddress(),
+                billingSenderEmailAddress,
                 invoice.id(),
                 invoice.id(),
                 invoice.amount(),
