@@ -88,6 +88,13 @@ Select the environment before running the request:
 - `java` -> `http://localhost:8080`
 - `python` -> `http://localhost:9090`
 
+## CI
+
+GitHub Actions runs both stacks on pushes to `main` and on pull requests via [`.github/workflows/ci.yml`](/Users/ozihler/workspace2026/modern-software-architecture-design-patterns-mono/.github/workflows/ci.yml).
+
+- Java job: `mvn verify`
+- Python job: `uv sync --all-groups`, `uv run ruff check`, `uv run pytest`
+
 ## Notes
 
 - The local machine used for scaffolding this repo has Maven installed.
