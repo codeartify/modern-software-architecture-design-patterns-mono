@@ -1,4 +1,4 @@
-package com.workshop.architecture.infrastructure;
+package com.workshop.architecture;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

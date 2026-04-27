@@ -1,4 +1,4 @@
-package com.workshop.architecture.infrastructure;
+package com.workshop.architecture;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;

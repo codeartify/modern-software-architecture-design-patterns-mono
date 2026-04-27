@@ -1,4 +1,4 @@
-package com.workshop.architecture.infrastructure;
+package com.workshop.architecture;
 
 public record ApiErrorResponse(
         int status,
