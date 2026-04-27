@@ -3,6 +3,7 @@
 
 # Java / Maven
 java/target/
+database/*.db
 database/*.mv.db
 database/*.trace.db
 
