@@ -89,4 +89,8 @@ public class E00MembershipEntity {
     public LocalDate getEndDate() {
         return endDate;
     }
+
+    public void suspend() {
+        this.status = "SUSPENDED";
+    }
 }

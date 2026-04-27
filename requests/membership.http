@@ -8,3 +8,11 @@ Accept: application/json
   "planId": "{{planId}}",
   "signedByCustodian": false
 }
+
+> {%
+  client.global.set("membershipId", response.body.membershipId);
+%}
+
+### Suspend membership
+POST {{baseUrl}}/api/e00/memberships/{{membershipId}}/suspend
+Accept: application/json

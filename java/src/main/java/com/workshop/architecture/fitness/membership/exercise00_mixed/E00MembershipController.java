@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -171,5 +172,25 @@ public class E00MembershipController {
                 externalInvoice == null ? null : externalInvoice.invoiceId(),
                 invoice.dueDate()
         );
+    }
+
+    @PostMapping("/{membershipId}/suspend")
+    E00MembershipResponse suspendMembership(@PathVariable String membershipId) {
+        E00MembershipEntity membership = membershipRepository.findById(UUID.fromString(membershipId))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Membership %s was not found".formatted(membershipId)
+                ));
+
+        if (!"ACTIVE".equals(membership.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Membership %s must be ACTIVE to suspend".formatted(membershipId)
+            );
+        }
+
+        membership.suspend();
+        membership = membershipRepository.save(membership);
+        return E00MembershipResponse.fromEntity(membership);
     }
 }
