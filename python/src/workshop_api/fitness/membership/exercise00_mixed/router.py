@@ -22,6 +22,7 @@ from workshop_api.fitness.membership.exercise00_mixed.models import E00Membershi
 from workshop_api.fitness.membership.exercise00_mixed.schemas import (
     E00ActivateMembershipRequest,
     E00ActivateMembershipResponse,
+    E00MembershipResponse,
 )
 from workshop_api.fitness.plan.models import PlanOrmModel
 
@@ -45,7 +46,11 @@ def get_billing_sender_email_address() -> str:
     return os.getenv("WORKSHOP_BILLING_SENDER_EMAIL_ADDRESS", "billing@codeartify.com")
 
 
-@router.post("/activate", response_model=E00ActivateMembershipResponse, response_model_by_alias=True)
+@router.post(
+    "/activate",
+    response_model=E00ActivateMembershipResponse,
+    response_model_by_alias=True,
+)
 async def activate_membership(
     activation_request: E00ActivateMembershipRequest,
     request: Request,
@@ -74,7 +79,8 @@ async def activate_membership(
     end_day = min(start_date.day, calendar.monthrange(end_year, end_month)[1])
     end_date = date(end_year, end_month, end_day)
     customer_age = start_date.year - customer.date_of_birth.year - (
-        (start_date.month, start_date.day) < (customer.date_of_birth.month, customer.date_of_birth.day)
+        (start_date.month, start_date.day)
+        < (customer.date_of_birth.month, customer.date_of_birth.day)
     )
 
     if customer_age < 18 and activation_request.signed_by_custodian is not True:
@@ -179,4 +185,42 @@ Codeartify Billing
         invoiceId=invoice.id,
         externalInvoiceId=external_invoice.invoice_id,
         invoiceDueDate=invoice.due_date,
+    )
+
+
+@router.post(
+    "/{membership_id}/suspend",
+    response_model=E00MembershipResponse,
+    response_model_by_alias=True,
+)
+async def suspend_membership(
+    membership_id: str,
+    session: Session = Depends(get_db_session),
+) -> E00MembershipResponse:
+    membership = session.get(E00MembershipOrmModel, membership_id)
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Membership {membership_id} was not found",
+        )
+
+    if membership.status != "ACTIVE":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Membership {membership_id} must be ACTIVE to suspend",
+        )
+
+    membership.status = "SUSPENDED"
+    session.commit()
+    session.refresh(membership)
+
+    return E00MembershipResponse(
+        membershipId=membership.id,
+        customerId=membership.customer_id,
+        planId=membership.plan_id,
+        planPrice=membership.plan_price,
+        planDuration=membership.plan_duration,
+        status=membership.status,
+        startDate=membership.start_date,
+        endDate=membership.end_date,
     )

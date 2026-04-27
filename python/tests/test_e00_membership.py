@@ -87,7 +87,10 @@ def test_e00_activate_membership_creates_membership_invoice_and_email(
     assert response.json()["planPrice"] == 999
     assert response.json()["planDuration"] == 12
     assert len(external_invoice_store.list_invoices()) == 1
-    assert external_invoice_store.list_invoices()[0].contract_reference == response.json()["membershipId"]
+    assert (
+        external_invoice_store.list_invoices()[0].contract_reference
+        == response.json()["membershipId"]
+    )
     assert len(email_service.sent_emails()) == 1
     assert "billing@codeartify.com" in email_service.sent_emails()[0]
     assert response.json()["invoiceId"] in email_service.sent_emails()[0]
@@ -163,5 +166,158 @@ def test_e00_activate_membership_rejects_minor_without_custodian_signature(
     assert response.json()["detail"] == "Customers younger than 18 require signedByCustodian=true"
     assert external_invoice_store.list_invoices() == []
     assert email_service.sent_emails() == []
+
+    app.dependency_overrides.clear()
+
+
+def test_e00_suspend_membership_changes_status_without_extending_runtime(
+    tmp_path: Path, monkeypatch
+) -> None:
+    test_engine = create_engine(
+        f"sqlite:///{tmp_path / 'e00-membership-suspend-test.db'}",
+        connect_args={"check_same_thread": False},
+    )
+    test_sessionmaker = sessionmaker(
+        bind=test_engine,
+        autoflush=False,
+        autocommit=False,
+        expire_on_commit=False,
+    )
+    Base.metadata.create_all(
+        bind=test_engine,
+        tables=[
+            CustomerOrmModel.__table__,
+            PlanOrmModel.__table__,
+            E00MembershipOrmModel.__table__,
+        ],
+    )
+
+    setup_session = test_sessionmaker()
+    setup_session.add(
+        CustomerOrmModel(
+            id="11111111-1111-1111-1111-111111111111",
+            name="Alice Active",
+            date_of_birth=date(1986, 8, 13),
+            email_address="alice.active@example.com",
+        )
+    )
+    setup_session.add(
+        PlanOrmModel(
+            id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+            title="Premium 12 Months",
+            description="Twelve months for regular training",
+            duration_in_months=12,
+            price=Decimal("999.00"),
+        )
+    )
+    setup_session.commit()
+    setup_session.close()
+
+    def get_test_db():
+        override_session = test_sessionmaker()
+        try:
+            yield override_session
+        finally:
+            override_session.close()
+
+    monkeypatch.setenv("WORKSHOP_EXTERNAL_INVOICE_PROVIDER_BASE_URL", "http://testserver")
+    app.dependency_overrides[database.get_db_session] = get_test_db
+    external_invoice_store.clear()
+    email_service.clear()
+    client = TestClient(app)
+
+    activated_membership = client.post(
+        "/api/e00/memberships/activate",
+        json={
+            "customerId": "11111111-1111-1111-1111-111111111111",
+            "planId": "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+            "signedByCustodian": False,
+        },
+    )
+
+    suspended_membership = client.post(
+        f"/api/e00/memberships/{activated_membership.json()['membershipId']}/suspend"
+    )
+
+    assert suspended_membership.status_code == 200
+    assert suspended_membership.json()["status"] == "SUSPENDED"
+    assert suspended_membership.json()["startDate"] == activated_membership.json()["startDate"]
+    assert suspended_membership.json()["endDate"] == activated_membership.json()["endDate"]
+
+    app.dependency_overrides.clear()
+
+
+def test_e00_suspend_membership_rejects_membership_that_is_not_active(
+    tmp_path: Path, monkeypatch
+) -> None:
+    test_engine = create_engine(
+        f"sqlite:///{tmp_path / 'e00-membership-suspend-reject-test.db'}",
+        connect_args={"check_same_thread": False},
+    )
+    test_sessionmaker = sessionmaker(
+        bind=test_engine,
+        autoflush=False,
+        autocommit=False,
+        expire_on_commit=False,
+    )
+    Base.metadata.create_all(
+        bind=test_engine,
+        tables=[
+            CustomerOrmModel.__table__,
+            PlanOrmModel.__table__,
+            E00MembershipOrmModel.__table__,
+        ],
+    )
+
+    setup_session = test_sessionmaker()
+    setup_session.add(
+        CustomerOrmModel(
+            id="11111111-1111-1111-1111-111111111111",
+            name="Alice Active",
+            date_of_birth=date(1986, 8, 13),
+            email_address="alice.active@example.com",
+        )
+    )
+    setup_session.add(
+        PlanOrmModel(
+            id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+            title="Premium 12 Months",
+            description="Twelve months for regular training",
+            duration_in_months=12,
+            price=Decimal("999.00"),
+        )
+    )
+    setup_session.commit()
+    setup_session.close()
+
+    def get_test_db():
+        override_session = test_sessionmaker()
+        try:
+            yield override_session
+        finally:
+            override_session.close()
+
+    monkeypatch.setenv("WORKSHOP_EXTERNAL_INVOICE_PROVIDER_BASE_URL", "http://testserver")
+    app.dependency_overrides[database.get_db_session] = get_test_db
+    external_invoice_store.clear()
+    email_service.clear()
+    client = TestClient(app)
+
+    activated_membership = client.post(
+        "/api/e00/memberships/activate",
+        json={
+            "customerId": "11111111-1111-1111-1111-111111111111",
+            "planId": "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+            "signedByCustodian": False,
+        },
+    )
+
+    client.post(f"/api/e00/memberships/{activated_membership.json()['membershipId']}/suspend")
+    rejected_suspend = client.post(
+        f"/api/e00/memberships/{activated_membership.json()['membershipId']}/suspend"
+    )
+
+    assert rejected_suspend.status_code == 400
+    assert "must be ACTIVE to suspend" in rejected_suspend.json()["detail"]
 
     app.dependency_overrides.clear()
