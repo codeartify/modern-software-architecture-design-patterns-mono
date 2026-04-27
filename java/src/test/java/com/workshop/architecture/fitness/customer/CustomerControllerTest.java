@@ -91,6 +91,20 @@ class CustomerControllerTest {
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/customers/{customerId}", customerId))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Customer %s was not found".formatted(customerId)))
+                .andExpect(jsonPath("$.path").value("/api/customers/" + customerId));
+    }
+
+    @Test
+    void returnsBadRequestForMalformedCustomerId() throws Exception {
+        mockMvc.perform(get("/api/customers/not-a-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid value for 'customerId': not-a-uuid"))
+                .andExpect(jsonPath("$.path").value("/api/customers/not-a-uuid"));
     }
 }
