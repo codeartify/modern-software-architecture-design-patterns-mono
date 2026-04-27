@@ -1,5 +1,5 @@
 ### Create plan
-POST {{baseUrl}}/api/shared/plans
+POST {{baseUrl}}/api/plans
 Content-Type: application/json
 Accept: application/json
 
@@ -15,15 +15,15 @@ Accept: application/json
 %}
 
 ### List plans
-GET {{baseUrl}}/api/shared/plans
+GET {{baseUrl}}/api/plans
 Accept: application/json
 
 ### Get plan by id
-GET {{baseUrl}}/api/shared/plans/{{planId}}
+GET {{baseUrl}}/api/plans/{{planId}}
 Accept: application/json
 
 ### Update plan
-PUT {{baseUrl}}/api/shared/plans/{{planId}}
+PUT {{baseUrl}}/api/plans/{{planId}}
 Content-Type: application/json
 Accept: application/json
 
@@ -35,5 +35,5 @@ Accept: application/json
 }
 
 ### Delete plan
-DELETE {{baseUrl}}/api/shared/plans/{{planId}}
+DELETE {{baseUrl}}/api/plans/{{planId}}
 Accept: application/json

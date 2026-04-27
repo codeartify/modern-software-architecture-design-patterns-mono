@@ -10,9 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
-import com.workshop.architecture.fitness.plan.SharedPlanRepository;
-import com.workshop.architecture.fitness.plan.SharedPlanUpsertRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +27,7 @@ import tools.jackson.databind.ObjectMapper;
         "spring.datasource.url=jdbc:h2:mem:shared-plan-test;DB_CLOSE_DELAY=-1",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-class SharedPlanControllerTest {
+class PlanControllerTest {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -39,7 +36,7 @@ class SharedPlanControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private SharedPlanRepository repository;
+    private PlanRepository repository;
 
     private MockMvc mockMvc;
 
@@ -51,18 +48,18 @@ class SharedPlanControllerTest {
 
     @Test
     void createsReadsUpdatesAndDeletesPlans() throws Exception {
-        String createPayload = objectMapper.writeValueAsString(new SharedPlanUpsertRequest(
+        String createPayload = objectMapper.writeValueAsString(new PlanUpsertRequest(
                 "Premium 12 Months",
                 "Twelve months for regular training",
                 12,
                 new BigDecimal("999.00")
         ));
 
-        String createdJson = mockMvc.perform(post("/api/shared/plans")
+        String createdJson = mockMvc.perform(post("/api/plans")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", Matchers.matchesPattern(".*/api/shared/plans/.+")))
+                .andExpect(header().string("Location", Matchers.matchesPattern(".*/api/plans/.+")))
                 .andExpect(jsonPath("$.title").value("Premium 12 Months"))
                 .andExpect(jsonPath("$.durationInMonths").value(12))
                 .andExpect(jsonPath("$.price").value(999.00))
@@ -72,18 +69,18 @@ class SharedPlanControllerTest {
 
         UUID planId = UUID.fromString(objectMapper.readTree(createdJson).get("id").asText());
 
-        mockMvc.perform(get("/api/shared/plans/{planId}", planId))
+        mockMvc.perform(get("/api/plans/{planId}", planId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(planId.toString()));
 
-        String updatePayload = objectMapper.writeValueAsString(new SharedPlanUpsertRequest(
+        String updatePayload = objectMapper.writeValueAsString(new PlanUpsertRequest(
                 "Premium 24 Months",
                 "Twenty-four months for long-term training",
                 24,
                 new BigDecimal("1699.00")
         ));
 
-        mockMvc.perform(put("/api/shared/plans/{planId}", planId)
+        mockMvc.perform(put("/api/plans/{planId}", planId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePayload))
                 .andExpect(status().isOk())
@@ -91,14 +88,14 @@ class SharedPlanControllerTest {
                 .andExpect(jsonPath("$.durationInMonths").value(24))
                 .andExpect(jsonPath("$.price").value(1699.00));
 
-        mockMvc.perform(get("/api/shared/plans"))
+        mockMvc.perform(get("/api/plans"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        mockMvc.perform(delete("/api/shared/plans/{planId}", planId))
+        mockMvc.perform(delete("/api/plans/{planId}", planId))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/shared/plans/{planId}", planId))
+        mockMvc.perform(get("/api/plans/{planId}", planId))
                 .andExpect(status().isNotFound());
     }
 }

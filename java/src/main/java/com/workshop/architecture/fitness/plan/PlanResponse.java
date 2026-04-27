@@ -3,15 +3,15 @@ package com.workshop.architecture.fitness.plan;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public record SharedPlanResponse(
+public record PlanResponse(
         UUID id,
         String title,
         String description,
         int durationInMonths,
         BigDecimal price
 ) {
-    public static SharedPlanResponse fromEntity(SharedPlanEntity entity) {
-        return new SharedPlanResponse(
+    public static PlanResponse fromEntity(PlanEntity entity) {
+        return new PlanResponse(
                 entity.getId(),
                 entity.getTitle(),
                 entity.getDescription(),

@@ -7,47 +7,47 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class SharedPlanService {
+public class PlanService {
 
-    private final SharedPlanRepository repository;
+    private final PlanRepository repository;
 
-    public SharedPlanService(SharedPlanRepository repository) {
+    public PlanService(PlanRepository repository) {
         this.repository = repository;
     }
 
-    public List<SharedPlanResponse> findAll() {
+    public List<PlanResponse> findAll() {
         return repository.findAll().stream()
-                .map(SharedPlanResponse::fromEntity)
+                .map(PlanResponse::fromEntity)
                 .toList();
     }
 
-    public SharedPlanResponse findById(UUID planId) {
-        return SharedPlanResponse.fromEntity(load(planId));
+    public PlanResponse findById(UUID planId) {
+        return PlanResponse.fromEntity(load(planId));
     }
 
-    public SharedPlanResponse create(SharedPlanUpsertRequest request) {
-        SharedPlanEntity entity = new SharedPlanEntity(
+    public PlanResponse create(PlanUpsertRequest request) {
+        PlanEntity entity = new PlanEntity(
                 UUID.randomUUID(),
                 request.title(),
                 request.description(),
                 request.durationInMonths(),
                 request.price()
         );
-        return SharedPlanResponse.fromEntity(repository.save(entity));
+        return PlanResponse.fromEntity(repository.save(entity));
     }
 
-    public SharedPlanResponse update(UUID planId, SharedPlanUpsertRequest request) {
-        SharedPlanEntity entity = load(planId);
+    public PlanResponse update(UUID planId, PlanUpsertRequest request) {
+        PlanEntity entity = load(planId);
         entity.updateFrom(request);
-        return SharedPlanResponse.fromEntity(repository.save(entity));
+        return PlanResponse.fromEntity(repository.save(entity));
     }
 
     public void delete(UUID planId) {
-        SharedPlanEntity entity = load(planId);
+        PlanEntity entity = load(planId);
         repository.delete(entity);
     }
 
-    private SharedPlanEntity load(UUID planId) {
+    private PlanEntity load(UUID planId) {
         return repository.findById(planId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,

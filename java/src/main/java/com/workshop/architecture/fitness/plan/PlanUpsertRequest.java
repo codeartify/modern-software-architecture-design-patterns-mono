@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
-public record SharedPlanUpsertRequest(
+public record PlanUpsertRequest(
         @NotBlank String title,
         @NotBlank String description,
         @Min(1) int durationInMonths,

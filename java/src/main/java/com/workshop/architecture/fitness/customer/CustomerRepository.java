@@ -3,5 +3,5 @@ package com.workshop.architecture.fitness.customer;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SharedCustomerRepository extends JpaRepository<SharedCustomerEntity, UUID> {
+public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID> {
 }

@@ -9,9 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
-
-import com.workshop.architecture.fitness.customer.SharedCustomerRepository;
-import com.workshop.architecture.fitness.customer.SharedCustomerUpsertRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +25,7 @@ import tools.jackson.databind.ObjectMapper;
         "spring.datasource.url=jdbc:h2:mem:shared-customer-test;DB_CLOSE_DELAY=-1",
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-class SharedCustomerControllerTest {
+class CustomerControllerTest {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -37,7 +34,7 @@ class SharedCustomerControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private SharedCustomerRepository repository;
+    private CustomerRepository repository;
 
     private MockMvc mockMvc;
 
@@ -49,17 +46,17 @@ class SharedCustomerControllerTest {
 
     @Test
     void createsReadsUpdatesAndDeletesCustomers() throws Exception {
-        String createPayload = objectMapper.writeValueAsString(new SharedCustomerUpsertRequest(
+        String createPayload = objectMapper.writeValueAsString(new CustomerUpsertRequest(
                 "Ada Example",
                 java.time.LocalDate.parse("1986-08-13"),
                 "ada@example.com"
         ));
 
-        String createdJson = mockMvc.perform(post("/api/shared/customers")
+        String createdJson = mockMvc.perform(post("/api/customers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.matchesPattern(".*/api/shared/customers/.+")))
+                .andExpect(header().string("Location", org.hamcrest.Matchers.matchesPattern(".*/api/customers/.+")))
                 .andExpect(jsonPath("$.name").value("Ada Example"))
                 .andExpect(jsonPath("$.dateOfBirth").value("1986-08-13"))
                 .andExpect(jsonPath("$.emailAddress").value("ada@example.com"))
@@ -69,31 +66,31 @@ class SharedCustomerControllerTest {
 
         UUID customerId = UUID.fromString(objectMapper.readTree(createdJson).get("id").asText());
 
-        mockMvc.perform(get("/api/shared/customers/{customerId}", customerId))
+        mockMvc.perform(get("/api/customers/{customerId}", customerId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(customerId.toString()));
 
-        String updatePayload = objectMapper.writeValueAsString(new SharedCustomerUpsertRequest(
+        String updatePayload = objectMapper.writeValueAsString(new CustomerUpsertRequest(
                 "Ada Lovelace",
                 java.time.LocalDate.parse("1986-08-13"),
                 "ada.lovelace@example.com"
         ));
 
-        mockMvc.perform(put("/api/shared/customers/{customerId}", customerId)
+        mockMvc.perform(put("/api/customers/{customerId}", customerId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Ada Lovelace"))
                 .andExpect(jsonPath("$.emailAddress").value("ada.lovelace@example.com"));
 
-        mockMvc.perform(get("/api/shared/customers"))
+        mockMvc.perform(get("/api/customers"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        mockMvc.perform(delete("/api/shared/customers/{customerId}", customerId))
+        mockMvc.perform(delete("/api/customers/{customerId}", customerId))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/shared/customers/{customerId}", customerId))
+        mockMvc.perform(get("/api/customers/{customerId}", customerId))
                 .andExpect(status().isNotFound());
     }
 }

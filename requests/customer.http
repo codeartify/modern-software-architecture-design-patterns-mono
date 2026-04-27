@@ -1,5 +1,5 @@
 ### Create customer
-POST {{baseUrl}}/api/shared/customers
+POST {{baseUrl}}/api/customers
 Content-Type: application/json
 Accept: application/json
 
@@ -14,15 +14,15 @@ Accept: application/json
 %}
 
 ### List customers
-GET {{baseUrl}}/api/shared/customers
+GET {{baseUrl}}/api/customers
 Accept: application/json
 
 ### Get customer by id
-GET {{baseUrl}}/api/shared/customers/{{customerId}}
+GET {{baseUrl}}/api/customers/{{customerId}}
 Accept: application/json
 
 ### Update customer
-PUT {{baseUrl}}/api/shared/customers/{{customerId}}
+PUT {{baseUrl}}/api/customers/{{customerId}}
 Content-Type: application/json
 Accept: application/json
 
@@ -33,5 +33,5 @@ Accept: application/json
 }
 
 ### Delete customer
-DELETE {{baseUrl}}/api/shared/customers/{{customerId}}
+DELETE {{baseUrl}}/api/customers/{{customerId}}
 Accept: application/json

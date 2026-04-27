@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SharedInMemoryEmailService {
+public class InMemoryEmailService {
 
     private final List<String> sentEmails = new ArrayList<>();
 

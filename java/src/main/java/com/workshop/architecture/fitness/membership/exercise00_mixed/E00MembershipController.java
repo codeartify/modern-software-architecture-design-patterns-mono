@@ -1,12 +1,15 @@
 package com.workshop.architecture.fitness.membership.exercise00_mixed;
 
-import com.workshop.architecture.fitness.customer.SharedCustomerRepository;
-import com.workshop.architecture.fitness.email.SharedInMemoryEmailService;
+import com.workshop.architecture.fitness.customer.CustomerRepository;
+import com.workshop.architecture.fitness.email.InMemoryEmailService;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderResponse;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStatus;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
-import com.workshop.architecture.fitness.plan.SharedPlanRepository;
+import com.workshop.architecture.fitness.plan.PlanRepository;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,25 +20,21 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/api/e00/memberships")
 public class E00MembershipController {
 
     private final E00MembershipRepository membershipRepository;
-    private final SharedCustomerRepository customerRepository;
-    private final SharedPlanRepository planRepository;
-    private final SharedInMemoryEmailService emailService;
+    private final CustomerRepository customerRepository;
+    private final PlanRepository planRepository;
+    private final InMemoryEmailService emailService;
     private final RestClient restClient;
 
     public E00MembershipController(
-            com.workshop.architecture.fitness.membership.exercise00_mixed.E00MembershipRepository membershipRepository,
-            SharedCustomerRepository customerRepository,
-            SharedPlanRepository planRepository,
-            SharedInMemoryEmailService emailService,
+            E00MembershipRepository membershipRepository,
+            CustomerRepository customerRepository,
+            PlanRepository planRepository,
+            InMemoryEmailService emailService,
             RestClient.Builder restClientBuilder,
             @Value("${workshop.external-invoice-provider.base-url}") String externalInvoiceProviderBaseUrl
     ) {
@@ -47,7 +46,7 @@ public class E00MembershipController {
     }
 
     @PostMapping("/activate")
-    com.workshop.architecture.fitness.membership.exercise00_mixed.E00ActivateMembershipResponse activateMembership(@Valid @RequestBody com.workshop.architecture.fitness.membership.exercise00_mixed.E00ActivateMembershipRequest request) {
+    E00ActivateMembershipResponse activateMembership(@Valid @RequestBody E00ActivateMembershipRequest request) {
         var customer = customerRepository.findById(UUID.fromString(request.customerId()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -68,7 +67,7 @@ public class E00MembershipController {
                 plan.getDurationInMonths()
         ));
 
-        var invoice = new com.workshop.architecture.fitness.membership.exercise00_mixed.E00Invoice(
+        var invoice = new E00Invoice(
                 UUID.randomUUID().toString(),
                 membership.getId().toString(),
                 request.customerId(),
@@ -129,7 +128,7 @@ public class E00MembershipController {
 
         emailService.send(email);
 
-        return new com.workshop.architecture.fitness.membership.exercise00_mixed.E00ActivateMembershipResponse(
+        return new E00ActivateMembershipResponse(
                 membership.getId().toString(),
                 membership.getCustomerId(),
                 membership.getPlanId(),

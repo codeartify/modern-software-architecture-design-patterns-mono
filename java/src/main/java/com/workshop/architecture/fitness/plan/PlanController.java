@@ -15,35 +15,35 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/shared/plans")
-public class SharedPlanController {
+@RequestMapping("/api/plans")
+public class PlanController {
 
-    private final SharedPlanService service;
+    private final PlanService service;
 
-    public SharedPlanController(SharedPlanService service) {
+    public PlanController(PlanService service) {
         this.service = service;
     }
 
     @GetMapping
-    List<SharedPlanResponse> listPlans() {
+    List<PlanResponse> listPlans() {
         return service.findAll();
     }
 
     @GetMapping("/{planId}")
-    SharedPlanResponse getPlan(@PathVariable UUID planId) {
+    PlanResponse getPlan(@PathVariable UUID planId) {
         return service.findById(planId);
     }
 
     @PostMapping
-    ResponseEntity<SharedPlanResponse> createPlan(@Valid @RequestBody SharedPlanUpsertRequest request) {
-        SharedPlanResponse response = service.create(request);
-        return ResponseEntity.created(URI.create("/api/shared/plans/" + response.id())).body(response);
+    ResponseEntity<PlanResponse> createPlan(@Valid @RequestBody PlanUpsertRequest request) {
+        PlanResponse response = service.create(request);
+        return ResponseEntity.created(URI.create("/api/plans/" + response.id())).body(response);
     }
 
     @PutMapping("/{planId}")
-    SharedPlanResponse updatePlan(
+    PlanResponse updatePlan(
             @PathVariable UUID planId,
-            @Valid @RequestBody SharedPlanUpsertRequest request
+            @Valid @RequestBody PlanUpsertRequest request
     ) {
         return service.update(planId, request);
     }

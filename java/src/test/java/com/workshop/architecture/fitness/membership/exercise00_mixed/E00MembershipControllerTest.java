@@ -2,7 +2,7 @@ package com.workshop.architecture.fitness.membership.exercise00_mixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.workshop.architecture.fitness.email.SharedInMemoryEmailService;
+import com.workshop.architecture.fitness.email.InMemoryEmailService;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStore;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -33,13 +33,13 @@ class E00MembershipControllerTest {
     private int serverPort;
 
     @Autowired
-    private com.workshop.architecture.fitness.membership.exercise00_mixed.E00MembershipRepository membershipRepository;
+    private E00MembershipRepository membershipRepository;
 
     @Autowired
     private ExternalInvoiceProviderStore externalInvoiceProviderStore;
 
     @Autowired
-    private SharedInMemoryEmailService emailService;
+    private InMemoryEmailService emailService;
 
     @BeforeEach
     void clearState() {
@@ -54,7 +54,7 @@ class E00MembershipControllerTest {
                 .baseUrl("http://localhost:" + serverPort)
                 .build();
 
-        com.workshop.architecture.fitness.membership.exercise00_mixed.E00ActivateMembershipResponse response = client.post()
+        E00ActivateMembershipResponse response = client.post()
                 .uri("/api/e00/memberships/activate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -64,7 +64,7 @@ class E00MembershipControllerTest {
                         }
                         """)
                 .retrieve()
-                .body(com.workshop.architecture.fitness.membership.exercise00_mixed.E00ActivateMembershipResponse.class);
+                .body(E00ActivateMembershipResponse.class);
 
         assertThat(response).isNotNull();
         assertThat(response.planPrice()).isEqualTo(999);

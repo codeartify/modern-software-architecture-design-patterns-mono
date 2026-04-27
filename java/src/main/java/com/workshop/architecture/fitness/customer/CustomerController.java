@@ -15,35 +15,35 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/shared/customers")
-public class SharedCustomerController {
+@RequestMapping("/api/customers")
+public class CustomerController {
 
-    private final SharedCustomerService service;
+    private final CustomerService service;
 
-    public SharedCustomerController(SharedCustomerService service) {
+    public CustomerController(CustomerService service) {
         this.service = service;
     }
 
     @GetMapping
-    List<SharedCustomerResponse> listCustomers() {
+    List<CustomerResponse> listCustomers() {
         return service.findAll();
     }
 
     @GetMapping("/{customerId}")
-    SharedCustomerResponse getCustomer(@PathVariable UUID customerId) {
+    CustomerResponse getCustomer(@PathVariable UUID customerId) {
         return service.findById(customerId);
     }
 
     @PostMapping
-    ResponseEntity<SharedCustomerResponse> createCustomer(@Valid @RequestBody SharedCustomerUpsertRequest request) {
-        SharedCustomerResponse response = service.create(request);
-        return ResponseEntity.created(URI.create("/api/shared/customers/" + response.id())).body(response);
+    ResponseEntity<CustomerResponse> createCustomer(@Valid @RequestBody CustomerUpsertRequest request) {
+        CustomerResponse response = service.create(request);
+        return ResponseEntity.created(URI.create("/api/customers/" + response.id())).body(response);
     }
 
     @PutMapping("/{customerId}")
-    SharedCustomerResponse updateCustomer(
+    CustomerResponse updateCustomer(
             @PathVariable UUID customerId,
-            @Valid @RequestBody SharedCustomerUpsertRequest request
+            @Valid @RequestBody CustomerUpsertRequest request
     ) {
         return service.update(customerId, request);
     }

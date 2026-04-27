@@ -1,9 +1,9 @@
-### E00 activate membership
+### Activate membership
 POST {{baseUrl}}/api/e00/memberships/activate
 Content-Type: application/json
 Accept: application/json
 
 {
-  "customerId": "11111111-1111-1111-1111-111111111111",
-  "planId": "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12"
+  "customerId": "{{customerId}}",
+  "planId": "{{planId}}"
 }

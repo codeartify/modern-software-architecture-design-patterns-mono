@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "plans")
-public class SharedPlanEntity {
+public class PlanEntity {
 
     @Id
     private UUID id;
@@ -26,10 +26,10 @@ public class SharedPlanEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    protected SharedPlanEntity() {
+    protected PlanEntity() {
     }
 
-    public SharedPlanEntity(
+    public PlanEntity(
             UUID id,
             String title,
             String description,
@@ -63,7 +63,7 @@ public class SharedPlanEntity {
         return price;
     }
 
-    public void updateFrom(SharedPlanUpsertRequest request) {
+    public void updateFrom(PlanUpsertRequest request) {
         this.title = request.title();
         this.description = request.description();
         this.durationInMonths = request.durationInMonths();

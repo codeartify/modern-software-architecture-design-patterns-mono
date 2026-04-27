@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-public record SharedCustomerUpsertRequest(
+public record CustomerUpsertRequest(
         @NotBlank String name,
         @NotNull LocalDate dateOfBirth,
         @NotBlank @Email String emailAddress

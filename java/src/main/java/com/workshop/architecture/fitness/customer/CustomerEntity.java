@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "customers")
-public class SharedCustomerEntity {
+public class CustomerEntity {
 
     @Id
     private UUID id;
@@ -23,10 +23,10 @@ public class SharedCustomerEntity {
     @Column(nullable = false, unique = true)
     private String emailAddress;
 
-    protected SharedCustomerEntity() {
+    protected CustomerEntity() {
     }
 
-    public SharedCustomerEntity(UUID id, String name, LocalDate dateOfBirth, String emailAddress) {
+    public CustomerEntity(UUID id, String name, LocalDate dateOfBirth, String emailAddress) {
         this.id = id;
         this.name = name;
         this.dateOfBirth = dateOfBirth;
@@ -49,7 +49,7 @@ public class SharedCustomerEntity {
         return emailAddress;
     }
 
-    public void updateFrom(SharedCustomerUpsertRequest request) {
+    public void updateFrom(CustomerUpsertRequest request) {
         this.name = request.name();
         this.dateOfBirth = request.dateOfBirth();
         this.emailAddress = request.emailAddress();
