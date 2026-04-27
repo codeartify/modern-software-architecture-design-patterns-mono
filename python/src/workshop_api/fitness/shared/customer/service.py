@@ -13,7 +13,11 @@ class SharedCustomerService:
         self.session = session
 
     def list_customers(self) -> list[SharedCustomerResponse]:
-        customers = self.session.query(SharedCustomerOrmModel).order_by(SharedCustomerOrmModel.name).all()
+        customers = (
+            self.session.query(SharedCustomerOrmModel)
+            .order_by(SharedCustomerOrmModel.name)
+            .all()
+        )
         return [self._to_response(customer) for customer in customers]
 
     def get_customer(self, customer_id: str) -> SharedCustomerResponse:
@@ -30,7 +34,11 @@ class SharedCustomerService:
         self.session.refresh(customer)
         return self._to_response(customer)
 
-    def update_customer(self, customer_id: str, request: SharedCustomerUpsertRequest) -> SharedCustomerResponse:
+    def update_customer(
+        self,
+        customer_id: str,
+        request: SharedCustomerUpsertRequest,
+    ) -> SharedCustomerResponse:
         customer = self._load_customer(customer_id)
         customer.name = request.name
         customer.date_of_birth = request.date_of_birth

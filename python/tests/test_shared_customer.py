@@ -11,8 +11,16 @@ from workshop_api.main import app
 
 
 def test_customer_crud_flow(tmp_path: Path) -> None:
-    test_engine = create_engine(f"sqlite:///{tmp_path / 'customer-test.db'}", connect_args={"check_same_thread": False})
-    test_sessionmaker = sessionmaker(bind=test_engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    test_engine = create_engine(
+        f"sqlite:///{tmp_path / 'customer-test.db'}",
+        connect_args={"check_same_thread": False},
+    )
+    test_sessionmaker = sessionmaker(
+        bind=test_engine,
+        autoflush=False,
+        autocommit=False,
+        expire_on_commit=False,
+    )
     Base.metadata.create_all(bind=test_engine, tables=[SharedCustomerOrmModel.__table__])
 
     def get_test_db():

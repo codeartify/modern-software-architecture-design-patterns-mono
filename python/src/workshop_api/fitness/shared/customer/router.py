@@ -17,7 +17,9 @@ def get_customer_service(session: Session = Depends(get_db_session)) -> SharedCu
 
 
 @router.get("", response_model=list[SharedCustomerResponse], response_model_by_alias=True)
-def list_customers(service: SharedCustomerService = Depends(get_customer_service)) -> list[SharedCustomerResponse]:
+def list_customers(
+    service: SharedCustomerService = Depends(get_customer_service),
+) -> list[SharedCustomerResponse]:
     return service.list_customers()
 
 
