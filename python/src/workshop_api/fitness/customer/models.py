@@ -4,10 +4,10 @@ import uuid
 
 from sqlalchemy import Column, Date, String
 
-from workshop_api.fitness.shared.customer.database import Base
+from workshop_api.fitness.customer.database import Base
 
 
-class SharedCustomerOrmModel(Base):
+class CustomerOrmModel(Base):
     __tablename__ = "customers"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

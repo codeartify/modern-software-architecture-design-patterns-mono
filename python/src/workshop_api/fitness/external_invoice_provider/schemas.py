@@ -2,9 +2,7 @@ from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from workshop_api.fitness.shared.external_invoice_provider.models import (
-    ExternalInvoiceProviderStatus,
-)
+from workshop_api.fitness.external_invoice_provider.models import ExternalInvoiceProviderStatus
 
 
 class ExternalInvoiceProviderUpsertRequest(BaseModel):

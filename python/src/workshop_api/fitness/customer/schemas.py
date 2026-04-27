@@ -3,7 +3,7 @@ from datetime import date
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class SharedCustomerUpsertRequest(BaseModel):
+class CustomerUpsertRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     name: str
@@ -11,7 +11,7 @@ class SharedCustomerUpsertRequest(BaseModel):
     email_address: str = Field(alias="emailAddress")
 
 
-class SharedCustomerResponse(BaseModel):
+class CustomerResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: str

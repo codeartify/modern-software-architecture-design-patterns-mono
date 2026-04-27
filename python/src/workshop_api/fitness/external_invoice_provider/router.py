@@ -2,18 +2,16 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, Response, status
 
-from workshop_api.fitness.shared.errors import NotFoundError
-from workshop_api.fitness.shared.external_invoice_provider.schemas import (
+from workshop_api.fitness.errors import NotFoundError
+from workshop_api.fitness.external_invoice_provider.schemas import (
     ExternalInvoiceProviderResponse,
     ExternalInvoiceProviderUpsertRequest,
 )
-from workshop_api.fitness.shared.external_invoice_provider.store import (
-    ExternalInvoiceProviderStore,
-)
+from workshop_api.fitness.external_invoice_provider.store import ExternalInvoiceProviderStore
 
 router = APIRouter(
-    prefix="/api/shared/external-invoice-provider/invoices",
-    tags=["shared-external-invoice-provider"],
+    prefix="/api/external-invoice-provider/invoices",
+    tags=["external-invoice-provider"],
 )
 
 store = ExternalInvoiceProviderStore()
@@ -48,7 +46,7 @@ def create_invoice(
 ) -> ExternalInvoiceProviderResponse:
     invoice_id = str(uuid.uuid4())
     created = store.save(invoice_id, request)
-    response.headers["Location"] = f"/api/shared/external-invoice-provider/invoices/{invoice_id}"
+    response.headers["Location"] = f"/api/external-invoice-provider/invoices/{invoice_id}"
     return created
 
 

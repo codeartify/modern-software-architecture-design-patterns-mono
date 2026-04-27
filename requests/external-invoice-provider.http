@@ -1,5 +1,5 @@
 ### Create external invoice
-POST {{baseUrl}}/api/shared/external-invoice-provider/invoices
+POST {{baseUrl}}/api/external-invoice-provider/invoices
 Content-Type: application/json
 Accept: application/json
 
@@ -22,15 +22,15 @@ Accept: application/json
 %}
 
 ### List external invoices
-GET {{baseUrl}}/api/shared/external-invoice-provider/invoices
+GET {{baseUrl}}/api/external-invoice-provider/invoices
 Accept: application/json
 
 ### Get external invoice by id
-GET {{baseUrl}}/api/shared/external-invoice-provider/invoices/{{externalInvoiceId}}
+GET {{baseUrl}}/api/external-invoice-provider/invoices/{{externalInvoiceId}}
 Accept: application/json
 
 ### Update external invoice
-PUT {{baseUrl}}/api/shared/external-invoice-provider/invoices/{{externalInvoiceId}}
+PUT {{baseUrl}}/api/external-invoice-provider/invoices/{{externalInvoiceId}}
 Content-Type: application/json
 Accept: application/json
 
@@ -50,5 +50,5 @@ Accept: application/json
 }
 
 ### Delete external invoice
-DELETE {{baseUrl}}/api/shared/external-invoice-provider/invoices/{{externalInvoiceId}}
+DELETE {{baseUrl}}/api/external-invoice-provider/invoices/{{externalInvoiceId}}
 Accept: application/json

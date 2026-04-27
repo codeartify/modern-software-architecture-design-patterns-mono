@@ -1,30 +1,23 @@
 from sqlalchemy.orm import Session
 
-from workshop_api.fitness.shared.customer.models import SharedCustomerOrmModel
-from workshop_api.fitness.shared.customer.schemas import (
-    SharedCustomerResponse,
-    SharedCustomerUpsertRequest,
-)
-from workshop_api.fitness.shared.errors import NotFoundError
+from workshop_api.fitness.customer.models import CustomerOrmModel
+from workshop_api.fitness.customer.schemas import CustomerResponse, CustomerUpsertRequest
+from workshop_api.fitness.errors import NotFoundError
 
 
-class SharedCustomerService:
+class CustomerService:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def list_customers(self) -> list[SharedCustomerResponse]:
-        customers = (
-            self.session.query(SharedCustomerOrmModel)
-            .order_by(SharedCustomerOrmModel.name)
-            .all()
-        )
+    def list_customers(self) -> list[CustomerResponse]:
+        customers = self.session.query(CustomerOrmModel).order_by(CustomerOrmModel.name).all()
         return [self._to_response(customer) for customer in customers]
 
-    def get_customer(self, customer_id: str) -> SharedCustomerResponse:
+    def get_customer(self, customer_id: str) -> CustomerResponse:
         return self._to_response(self._load_customer(customer_id))
 
-    def create_customer(self, request: SharedCustomerUpsertRequest) -> SharedCustomerResponse:
-        customer = SharedCustomerOrmModel(
+    def create_customer(self, request: CustomerUpsertRequest) -> CustomerResponse:
+        customer = CustomerOrmModel(
             name=request.name,
             date_of_birth=request.date_of_birth,
             email_address=str(request.email_address),
@@ -37,8 +30,8 @@ class SharedCustomerService:
     def update_customer(
         self,
         customer_id: str,
-        request: SharedCustomerUpsertRequest,
-    ) -> SharedCustomerResponse:
+        request: CustomerUpsertRequest,
+    ) -> CustomerResponse:
         customer = self._load_customer(customer_id)
         customer.name = request.name
         customer.date_of_birth = request.date_of_birth
@@ -52,15 +45,15 @@ class SharedCustomerService:
         self.session.delete(customer)
         self.session.commit()
 
-    def _load_customer(self, customer_id: str) -> SharedCustomerOrmModel:
-        customer = self.session.get(SharedCustomerOrmModel, customer_id)
+    def _load_customer(self, customer_id: str) -> CustomerOrmModel:
+        customer = self.session.get(CustomerOrmModel, customer_id)
         if customer is None:
             raise NotFoundError(f"Customer {customer_id} was not found")
         return customer
 
     @staticmethod
-    def _to_response(customer: SharedCustomerOrmModel) -> SharedCustomerResponse:
-        return SharedCustomerResponse(
+    def _to_response(customer: CustomerOrmModel) -> CustomerResponse:
+        return CustomerResponse(
             id=customer.id,
             name=customer.name,
             dateOfBirth=customer.date_of_birth,

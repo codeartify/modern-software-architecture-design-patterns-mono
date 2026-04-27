@@ -40,13 +40,13 @@ def get_db_session() -> Generator[Session]:
 
 
 def init_db() -> None:
-    from workshop_api.fitness.shared.customer.models import SharedCustomerOrmModel
-    from workshop_api.fitness.shared.plan.models import SharedPlanOrmModel
+    from workshop_api.fitness.customer.models import CustomerOrmModel
+    from workshop_api.fitness.plan.models import PlanOrmModel
 
     Base.metadata.create_all(
         bind=engine,
         tables=[
-            SharedCustomerOrmModel.__table__,
-            SharedPlanOrmModel.__table__,
+            CustomerOrmModel.__table__,
+            PlanOrmModel.__table__,
         ],
     )

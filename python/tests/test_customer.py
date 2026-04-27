@@ -4,9 +4,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from workshop_api.fitness.shared.customer import database
-from workshop_api.fitness.shared.customer.database import Base
-from workshop_api.fitness.shared.customer.models import SharedCustomerOrmModel
+from workshop_api.fitness.customer import database
+from workshop_api.fitness.customer.database import Base
+from workshop_api.fitness.customer.models import CustomerOrmModel
 from workshop_api.main import app
 
 
@@ -21,7 +21,7 @@ def test_customer_crud_flow(tmp_path: Path) -> None:
         autocommit=False,
         expire_on_commit=False,
     )
-    Base.metadata.create_all(bind=test_engine, tables=[SharedCustomerOrmModel.__table__])
+    Base.metadata.create_all(bind=test_engine, tables=[CustomerOrmModel.__table__])
 
     def get_test_db():
         session = test_sessionmaker()
@@ -34,7 +34,7 @@ def test_customer_crud_flow(tmp_path: Path) -> None:
     client = TestClient(app)
 
     create_response = client.post(
-        "/api/shared/customers",
+        "/api/customers",
         json={
             "name": "Ada Example",
             "dateOfBirth": "1986-08-13",
@@ -45,12 +45,12 @@ def test_customer_crud_flow(tmp_path: Path) -> None:
     assert create_response.status_code == 201
     customer_id = create_response.json()["id"]
 
-    get_response = client.get(f"/api/shared/customers/{customer_id}")
+    get_response = client.get(f"/api/customers/{customer_id}")
     assert get_response.status_code == 200
     assert get_response.json()["dateOfBirth"] == "1986-08-13"
 
     update_response = client.put(
-        f"/api/shared/customers/{customer_id}",
+        f"/api/customers/{customer_id}",
         json={
             "name": "Ada Lovelace",
             "dateOfBirth": "1986-08-13",
@@ -61,14 +61,14 @@ def test_customer_crud_flow(tmp_path: Path) -> None:
     assert update_response.status_code == 200
     assert update_response.json()["name"] == "Ada Lovelace"
 
-    list_response = client.get("/api/shared/customers")
+    list_response = client.get("/api/customers")
     assert list_response.status_code == 200
     assert len(list_response.json()) == 1
 
-    delete_response = client.delete(f"/api/shared/customers/{customer_id}")
+    delete_response = client.delete(f"/api/customers/{customer_id}")
     assert delete_response.status_code == 204
 
-    missing_response = client.get(f"/api/shared/customers/{customer_id}")
+    missing_response = client.get(f"/api/customers/{customer_id}")
     assert missing_response.status_code == 404
 
     app.dependency_overrides.clear()

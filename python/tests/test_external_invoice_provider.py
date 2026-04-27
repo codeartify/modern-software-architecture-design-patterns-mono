@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from workshop_api.fitness.shared.external_invoice_provider.router import store
+from workshop_api.fitness.external_invoice_provider.router import store
 from workshop_api.main import app
 
 
@@ -9,7 +9,7 @@ def test_external_invoice_provider_crud_flow() -> None:
     client = TestClient(app)
 
     create_response = client.post(
-        "/api/shared/external-invoice-provider/invoices",
+        "/api/external-invoice-provider/invoices",
         json={
             "customerReference": "customer-adult-1",
             "contractReference": "membership-001",
@@ -28,12 +28,12 @@ def test_external_invoice_provider_crud_flow() -> None:
     assert create_response.status_code == 201
     invoice_id = create_response.json()["invoiceId"]
 
-    get_response = client.get(f"/api/shared/external-invoice-provider/invoices/{invoice_id}")
+    get_response = client.get(f"/api/external-invoice-provider/invoices/{invoice_id}")
     assert get_response.status_code == 200
     assert get_response.json()["contractReference"] == "membership-001"
 
     update_response = client.put(
-        f"/api/shared/external-invoice-provider/invoices/{invoice_id}",
+        f"/api/external-invoice-provider/invoices/{invoice_id}",
         json={
             "customerReference": "customer-adult-1",
             "contractReference": "membership-001",
@@ -53,12 +53,12 @@ def test_external_invoice_provider_crud_flow() -> None:
     assert update_response.status_code == 200
     assert update_response.json()["status"] == "PAID"
 
-    list_response = client.get("/api/shared/external-invoice-provider/invoices")
+    list_response = client.get("/api/external-invoice-provider/invoices")
     assert list_response.status_code == 200
     assert len(list_response.json()) == 1
 
-    delete_response = client.delete(f"/api/shared/external-invoice-provider/invoices/{invoice_id}")
+    delete_response = client.delete(f"/api/external-invoice-provider/invoices/{invoice_id}")
     assert delete_response.status_code == 204
 
-    missing_response = client.get(f"/api/shared/external-invoice-provider/invoices/{invoice_id}")
+    missing_response = client.get(f"/api/external-invoice-provider/invoices/{invoice_id}")
     assert missing_response.status_code == 404

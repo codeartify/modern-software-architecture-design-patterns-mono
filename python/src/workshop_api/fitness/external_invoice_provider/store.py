@@ -1,4 +1,4 @@
-from workshop_api.fitness.shared.external_invoice_provider.schemas import (
+from workshop_api.fitness.external_invoice_provider.schemas import (
     ExternalInvoiceProviderResponse,
     ExternalInvoiceProviderUpsertRequest,
 )

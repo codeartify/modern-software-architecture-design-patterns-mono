@@ -1,32 +1,32 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
-from workshop_api.fitness.shared.customer.database import get_db_session
-from workshop_api.fitness.shared.errors import NotFoundError
-from workshop_api.fitness.shared.plan.schemas import SharedPlanResponse, SharedPlanUpsertRequest
-from workshop_api.fitness.shared.plan.service import SharedPlanService
+from workshop_api.fitness.customer.database import get_db_session
+from workshop_api.fitness.errors import NotFoundError
+from workshop_api.fitness.plan.schemas import PlanResponse, PlanUpsertRequest
+from workshop_api.fitness.plan.service import PlanService
 
-router = APIRouter(prefix="/api/shared/plans", tags=["shared-plan"])
-
-
-def get_plan_service(session: Session = Depends(get_db_session)) -> SharedPlanService:
-    return SharedPlanService(session)
+router = APIRouter(prefix="/api/plans", tags=["plan"])
 
 
-@router.get("", response_model=list[SharedPlanResponse], response_model_by_alias=True)
-def list_plans(service: SharedPlanService = Depends(get_plan_service)) -> list[SharedPlanResponse]:
+def get_plan_service(session: Session = Depends(get_db_session)) -> PlanService:
+    return PlanService(session)
+
+
+@router.get("", response_model=list[PlanResponse], response_model_by_alias=True)
+def list_plans(service: PlanService = Depends(get_plan_service)) -> list[PlanResponse]:
     return service.list_plans()
 
 
 @router.get(
     "/{plan_id}",
-    response_model=SharedPlanResponse,
+    response_model=PlanResponse,
     response_model_by_alias=True,
 )
 def get_plan(
     plan_id: str,
-    service: SharedPlanService = Depends(get_plan_service),
-) -> SharedPlanResponse:
+    service: PlanService = Depends(get_plan_service),
+) -> PlanResponse:
     try:
         return service.get_plan(plan_id)
     except NotFoundError as error:
@@ -35,30 +35,30 @@ def get_plan(
 
 @router.post(
     "",
-    response_model=SharedPlanResponse,
+    response_model=PlanResponse,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
 )
 def create_plan(
-    request: SharedPlanUpsertRequest,
+    request: PlanUpsertRequest,
     response: Response,
-    service: SharedPlanService = Depends(get_plan_service),
-) -> SharedPlanResponse:
+    service: PlanService = Depends(get_plan_service),
+) -> PlanResponse:
     created = service.create_plan(request)
-    response.headers["Location"] = f"/api/shared/plans/{created.id}"
+    response.headers["Location"] = f"/api/plans/{created.id}"
     return created
 
 
 @router.put(
     "/{plan_id}",
-    response_model=SharedPlanResponse,
+    response_model=PlanResponse,
     response_model_by_alias=True,
 )
 def update_plan(
     plan_id: str,
-    request: SharedPlanUpsertRequest,
-    service: SharedPlanService = Depends(get_plan_service),
-) -> SharedPlanResponse:
+    request: PlanUpsertRequest,
+    service: PlanService = Depends(get_plan_service),
+) -> PlanResponse:
     try:
         return service.update_plan(plan_id, request)
     except NotFoundError as error:
@@ -68,7 +68,7 @@ def update_plan(
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_plan(
     plan_id: str,
-    service: SharedPlanService = Depends(get_plan_service),
+    service: PlanService = Depends(get_plan_service),
 ) -> Response:
     try:
         service.delete_plan(plan_id)

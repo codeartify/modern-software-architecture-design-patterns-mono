@@ -3,7 +3,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class SharedPlanUpsertRequest(BaseModel):
+class PlanUpsertRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     title: str
@@ -12,7 +12,7 @@ class SharedPlanUpsertRequest(BaseModel):
     price: Decimal
 
 
-class SharedPlanResponse(BaseModel):
+class PlanResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: str
