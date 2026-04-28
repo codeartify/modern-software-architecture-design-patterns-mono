@@ -693,6 +693,7 @@ def test_e00_payment_received_for_active_membership_marks_billing_reference_paid
     assert response.json()["previousMembershipStatus"] == "ACTIVE"
     assert response.json()["newMembershipStatus"] == "ACTIVE"
     assert response.json()["reactivated"] is False
+    assert response.json()["message"] == "Payment recorded; membership status unchanged"
 
     verification_session = test_sessionmaker()
     billing_reference = verification_session.get(
@@ -777,6 +778,7 @@ def test_e00_payment_received_reactivates_membership_suspended_for_non_payment_w
     assert response.json()["previousMembershipStatus"] == "SUSPENDED"
     assert response.json()["newMembershipStatus"] == "ACTIVE"
     assert response.json()["reactivated"] is True
+    assert response.json()["message"] == "Payment recorded; membership reactivated"
 
     verification_session = test_sessionmaker()
     membership = verification_session.get(
@@ -856,9 +858,10 @@ def test_e00_payment_received_keeps_suspended_membership_suspended_when_period_h
         },
     )
 
-    assert response.status_code == 409
+    assert response.status_code == 200
     assert response.json()["newMembershipStatus"] == "SUSPENDED"
     assert response.json()["reactivated"] is False
+    assert response.json()["message"] == "Payment recorded; membership status unchanged"
     app.dependency_overrides.clear()
 
 
@@ -962,10 +965,15 @@ def test_e00_payment_received_keeps_other_suspensions_and_cancellations_unchange
         },
     )
 
-    assert manual_suspended_response.status_code == 409
+    assert manual_suspended_response.status_code == 200
     assert manual_suspended_response.json()["newMembershipStatus"] == "SUSPENDED"
-    assert cancelled_response.status_code == 409
+    assert (
+        manual_suspended_response.json()["message"]
+        == "Payment recorded; membership status unchanged"
+    )
+    assert cancelled_response.status_code == 200
     assert cancelled_response.json()["newMembershipStatus"] == "CANCELLED"
+    assert cancelled_response.json()["message"] == "Payment recorded; membership status unchanged"
     app.dependency_overrides.clear()
 
 
@@ -1048,6 +1056,13 @@ def test_e00_payment_received_is_idempotent_for_repeated_callbacks(tmp_path: Pat
     assert second_response.json()["billingReferenceId"] == "billing-idempotent"
     assert second_response.json()["newMembershipStatus"] == "ACTIVE"
     assert second_response.json()["reactivated"] is False
+    assert (
+        first_response.json()["message"] == "Payment recorded; membership status unchanged"
+    )
+    assert (
+        second_response.json()["message"]
+        == "Payment was already recorded; membership status unchanged"
+    )
 
     verification_session = test_sessionmaker()
     billing_reference = verification_session.get(

@@ -447,6 +447,11 @@ async def payment_received(
         )
 
     paid_at = payment_request.paid_at or datetime.now(UTC)
+    message = (
+        "Payment was already recorded; membership status unchanged"
+        if billing_reference.status == "PAID"
+        else "Payment recorded; membership status unchanged"
+    )
 
     if billing_reference.status != "PAID":
         billing_reference.status = "PAID"
@@ -462,103 +467,22 @@ async def payment_received(
 
     previous_membership_status = membership.status
     new_membership_status = membership.status
-    message = "Payment recorded"
     reactivated = False
-
-    if membership.status == "ACTIVE":
-        message = "Membership remains active"
-        session.commit()
-        return E00PaymentReceivedResponse(
-            paidAt=paid_at,
-            membershipId=membership.id,
-            billingReferenceId=billing_reference.id,
-            previousMembershipStatus=previous_membership_status,
-            newMembershipStatus=new_membership_status,
-            reactivated=reactivated,
-            message=message,
-        )
 
     if membership.status == "SUSPENDED" and membership.reason == "NON_PAYMENT":
         if paid_at.date() <= membership.end_date:
             membership.status = "ACTIVE"
             membership.reason = None
             session.add(membership)
-            session.commit()
-            session.refresh(membership)
-            return E00PaymentReceivedResponse(
-                paidAt=paid_at,
-                membershipId=membership.id,
-                billingReferenceId=billing_reference.id,
-                previousMembershipStatus=previous_membership_status,
-                newMembershipStatus=membership.status,
-                reactivated=True,
-                message="Membership reactivated after payment",
-            )
-
-        session.commit()
-        conflict_response = E00PaymentReceivedResponse(
-            paidAt=paid_at,
-            membershipId=membership.id,
-            billingReferenceId=billing_reference.id,
-            previousMembershipStatus=previous_membership_status,
-            newMembershipStatus=new_membership_status,
-            reactivated=False,
-            message="Membership remains suspended because the membership period already ended",
-        )
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content=_response_content(conflict_response),
-        )
-
-    if membership.status == "SUSPENDED":
-        session.commit()
-        conflict_response = E00PaymentReceivedResponse(
-            paidAt=paid_at,
-            membershipId=membership.id,
-            billingReferenceId=billing_reference.id,
-            previousMembershipStatus=previous_membership_status,
-            newMembershipStatus=new_membership_status,
-            reactivated=False,
-            message="Membership remains suspended for a different reason",
-        )
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content=_response_content(conflict_response),
-        )
-
-    if membership.status == "CANCELLED":
-        session.commit()
-        conflict_response = E00PaymentReceivedResponse(
-            paidAt=paid_at,
-            membershipId=membership.id,
-            billingReferenceId=billing_reference.id,
-            previousMembershipStatus=previous_membership_status,
-            newMembershipStatus=new_membership_status,
-            reactivated=False,
-            message="Membership remains cancelled",
-        )
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content=_response_content(conflict_response),
-        )
-
-    if membership.status == "PENDING":
-        session.commit()
-        conflict_response = E00PaymentReceivedResponse(
-            paidAt=paid_at,
-            membershipId=membership.id,
-            billingReferenceId=billing_reference.id,
-            previousMembershipStatus=previous_membership_status,
-            newMembershipStatus=new_membership_status,
-            reactivated=False,
-            message="Pending memberships cannot be activated by payment",
-        )
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content=_response_content(conflict_response),
-        )
+            new_membership_status = "ACTIVE"
+            reactivated = True
+            message = "Payment recorded; membership reactivated"
 
     session.commit()
+    if reactivated:
+        session.refresh(membership)
+        new_membership_status = membership.status
+
     return E00PaymentReceivedResponse(
         paidAt=paid_at,
         membershipId=membership.id,
