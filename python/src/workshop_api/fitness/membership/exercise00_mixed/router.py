@@ -182,7 +182,7 @@ async def activate_membership(
 
     async with httpx.AsyncClient(**client_kwargs) as client:
         external_invoice_http_response = await client.post(
-            "/api/external-invoice-provider/invoices",
+            "/api/shared/external-invoice-provider/invoices",
             json=json.loads(
                 external_invoice_request.model_dump_json(by_alias=True)
                 if hasattr(external_invoice_request, "model_dump_json")
