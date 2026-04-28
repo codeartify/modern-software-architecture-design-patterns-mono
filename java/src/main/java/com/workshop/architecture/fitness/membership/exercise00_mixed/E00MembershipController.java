@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -221,15 +222,20 @@ public class E00MembershipController {
         Instant checkedAt = request == null || request.checkedAt() == null ? Instant.now() : request.checkedAt();
         LocalDate checkedAtDate = checkedAt.atZone(ZoneOffset.UTC).toLocalDate();
         List<E00MembershipEntity> memberships = membershipRepository.findAll();
-        ExternalInvoiceProviderResponse[] invoiceResponses = restClient.get()
-                .uri("/api/shared/external-invoice-provider/invoices")
-                .retrieve()
-                .body(ExternalInvoiceProviderResponse[].class);
-        List<ExternalInvoiceProviderResponse> externalInvoices = invoiceResponses == null
-                ? List.of()
-                : Arrays.asList(invoiceResponses);
+        List<E00MembershipBillingReferenceEntity> openBillingReferences = billingReferenceRepository.findByStatus("OPEN");
+        List<ExternalInvoiceProviderResponse> externalInvoices;
         List<String> suspendedMembershipIds = new ArrayList<>();
         int checkedMemberships = 0;
+
+        try {
+            ExternalInvoiceProviderResponse[] invoiceResponses = restClient.get()
+                    .uri("/api/shared/external-invoice-provider/invoices")
+                    .retrieve()
+                    .body(ExternalInvoiceProviderResponse[].class);
+            externalInvoices = invoiceResponses == null ? List.of() : Arrays.asList(invoiceResponses);
+        } catch (RestClientException ignored) {
+            externalInvoices = List.of();
+        }
 
         for (E00MembershipEntity membership : memberships) {
             if (!"ACTIVE".equals(membership.getStatus())) {
@@ -238,13 +244,31 @@ public class E00MembershipController {
 
             checkedMemberships++;
 
-            boolean hasOverdueUnpaidInvoice = externalInvoices.stream().anyMatch(invoice ->
-                    membership.getId().toString().equals(invoice.contractReference())
-                            && invoice.status() == ExternalInvoiceProviderStatus.OPEN
-                            && invoice.dueDate().isBefore(checkedAtDate)
-            );
+            E00MembershipBillingReferenceEntity overdueBillingReference = openBillingReferences.stream()
+                    .filter(billingReference -> membership.getId().equals(billingReference.getMembershipId()))
+                    .filter(billingReference -> billingReference.getDueDate().isBefore(checkedAtDate))
+                    .findFirst()
+                    .orElse(null);
 
-            if (hasOverdueUnpaidInvoice) {
+            if (overdueBillingReference == null) {
+                continue;
+            }
+
+            ExternalInvoiceProviderResponse matchingExternalInvoice = externalInvoices.stream()
+                    .filter(invoice ->
+                            overdueBillingReference.getExternalInvoiceId().equals(invoice.invoiceId())
+                                    || overdueBillingReference.getExternalInvoiceReference()
+                                    .equals(invoice.externalCorrelationId())
+                                    || membership.getId().toString().equals(invoice.contractReference())
+                    )
+                    .findFirst()
+                    .orElse(null);
+
+            if (matchingExternalInvoice != null && matchingExternalInvoice.status() != ExternalInvoiceProviderStatus.OPEN) {
+                continue;
+            }
+
+            if (!membership.isSuspendedForNonPayment()) {
                 membership.suspendForNonPayment();
                 membershipRepository.save(membership);
                 suspendedMembershipIds.add(membership.getId().toString());
