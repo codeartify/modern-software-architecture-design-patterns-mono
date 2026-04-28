@@ -77,10 +77,10 @@ async def list_memberships(
     response_model_by_alias=True,
 )
 async def get_membership(
-    membership_id: str,
+    membership_id: uuid.UUID,
     session: Session = Depends(get_db_session),
 ) -> E00MembershipResponse:
-    membership = session.get(E00MembershipOrmModel, membership_id)
+    membership = session.get(E00MembershipOrmModel, str(membership_id))
     if membership is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -112,14 +112,14 @@ async def activate_membership(
     external_invoice_provider_base_url: str = Depends(get_external_invoice_provider_base_url),
     billing_sender_email_address: str = Depends(get_billing_sender_email_address),
 ) -> E00ActivateMembershipResponse:
-    customer = session.get(CustomerOrmModel, activation_request.customer_id)
+    customer = session.get(CustomerOrmModel, str(activation_request.customer_id))
     if customer is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Customer {activation_request.customer_id} was not found",
         )
 
-    plan = session.get(PlanOrmModel, activation_request.plan_id)
+    plan = session.get(PlanOrmModel, str(activation_request.plan_id))
     if plan is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -144,8 +144,8 @@ async def activate_membership(
         )
 
     membership = E00MembershipOrmModel(
-        customer_id=activation_request.customer_id,
-        plan_id=activation_request.plan_id,
+        customer_id=str(activation_request.customer_id),
+        plan_id=str(activation_request.plan_id),
         plan_price=int(Decimal(plan.price)),
         plan_duration=plan.duration_in_months,
         status="ACTIVE",
@@ -162,7 +162,7 @@ async def activate_membership(
     external_invoice_id: str | None
 
     external_invoice_request = ExternalInvoiceProviderUpsertRequest(
-        customerReference=activation_request.customer_id,
+        customerReference=str(activation_request.customer_id),
         contractReference=membership.id,
         amountInCents=membership.plan_price,
         currency="CHF",
@@ -360,7 +360,7 @@ async def payment_received(
             session.query(E00MembershipBillingReferenceOrmModel)
             .filter(
                 E00MembershipBillingReferenceOrmModel.membership_id
-                == payment_request.membership_id
+                == str(payment_request.membership_id)
             )
             .first()
         )

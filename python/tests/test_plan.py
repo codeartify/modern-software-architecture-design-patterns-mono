@@ -77,3 +77,17 @@ def test_plan_crud_flow(tmp_path: Path) -> None:
     assert missing_response.status_code == 404
 
     app.dependency_overrides.clear()
+
+
+def test_plan_get_rejects_malformed_plan_id() -> None:
+    client = TestClient(app)
+
+    response = client.get("/api/plans/not-a-uuid")
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid value for 'planId': not-a-uuid",
+        "path": "/api/plans/not-a-uuid",
+    }

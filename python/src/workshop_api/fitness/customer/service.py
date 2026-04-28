@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from workshop_api.fitness.customer.models import CustomerOrmModel
@@ -13,7 +15,7 @@ class CustomerService:
         customers = self.session.query(CustomerOrmModel).order_by(CustomerOrmModel.name).all()
         return [self._to_response(customer) for customer in customers]
 
-    def get_customer(self, customer_id: str) -> CustomerResponse:
+    def get_customer(self, customer_id: UUID) -> CustomerResponse:
         return self._to_response(self._load_customer(customer_id))
 
     def create_customer(self, request: CustomerUpsertRequest) -> CustomerResponse:
@@ -29,7 +31,7 @@ class CustomerService:
 
     def update_customer(
         self,
-        customer_id: str,
+        customer_id: UUID,
         request: CustomerUpsertRequest,
     ) -> CustomerResponse:
         customer = self._load_customer(customer_id)
@@ -40,13 +42,13 @@ class CustomerService:
         self.session.refresh(customer)
         return self._to_response(customer)
 
-    def delete_customer(self, customer_id: str) -> None:
+    def delete_customer(self, customer_id: UUID) -> None:
         customer = self._load_customer(customer_id)
         self.session.delete(customer)
         self.session.commit()
 
-    def _load_customer(self, customer_id: str) -> CustomerOrmModel:
-        customer = self.session.get(CustomerOrmModel, customer_id)
+    def _load_customer(self, customer_id: UUID) -> CustomerOrmModel:
+        customer = self.session.get(CustomerOrmModel, str(customer_id))
         if customer is None:
             raise NotFoundError(f"Customer {customer_id} was not found")
         return customer

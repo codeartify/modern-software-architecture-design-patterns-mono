@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,7 +16,7 @@ class PlanUpsertRequest(BaseModel):
 class PlanResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    id: str
+    id: UUID
     title: str
     description: str
     duration_in_months: int = Field(

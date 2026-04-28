@@ -72,3 +72,17 @@ def test_customer_crud_flow(tmp_path: Path) -> None:
     assert missing_response.status_code == 404
 
     app.dependency_overrides.clear()
+
+
+def test_customer_get_rejects_malformed_customer_id() -> None:
+    client = TestClient(app)
+
+    response = client.get("/api/customers/not-a-uuid")
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid value for 'customerId': not-a-uuid",
+        "path": "/api/customers/not-a-uuid",
+    }

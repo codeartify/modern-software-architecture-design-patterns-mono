@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
@@ -26,7 +28,7 @@ def list_customers(
     response_model_by_alias=True,
 )
 def get_customer(
-    customer_id: str,
+    customer_id: UUID,
     service: CustomerService = Depends(get_customer_service),
 ) -> CustomerResponse:
     try:
@@ -57,7 +59,7 @@ def create_customer(
     response_model_by_alias=True,
 )
 def update_customer(
-    customer_id: str,
+    customer_id: UUID,
     request: CustomerUpsertRequest,
     service: CustomerService = Depends(get_customer_service),
 ) -> CustomerResponse:
@@ -69,7 +71,7 @@ def update_customer(
 
 @router.delete("/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_customer(
-    customer_id: str,
+    customer_id: UUID,
     service: CustomerService = Depends(get_customer_service),
 ) -> Response:
     try:

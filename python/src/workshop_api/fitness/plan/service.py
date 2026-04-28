@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from workshop_api.fitness.errors import NotFoundError
@@ -13,7 +15,7 @@ class PlanService:
         plans = self.session.query(PlanOrmModel).order_by(PlanOrmModel.title).all()
         return [self._to_response(plan) for plan in plans]
 
-    def get_plan(self, plan_id: str) -> PlanResponse:
+    def get_plan(self, plan_id: UUID) -> PlanResponse:
         return self._to_response(self._load_plan(plan_id))
 
     def create_plan(self, request: PlanUpsertRequest) -> PlanResponse:
@@ -28,7 +30,7 @@ class PlanService:
         self.session.refresh(plan)
         return self._to_response(plan)
 
-    def update_plan(self, plan_id: str, request: PlanUpsertRequest) -> PlanResponse:
+    def update_plan(self, plan_id: UUID, request: PlanUpsertRequest) -> PlanResponse:
         plan = self._load_plan(plan_id)
         plan.title = request.title
         plan.description = request.description
@@ -38,13 +40,13 @@ class PlanService:
         self.session.refresh(plan)
         return self._to_response(plan)
 
-    def delete_plan(self, plan_id: str) -> None:
+    def delete_plan(self, plan_id: UUID) -> None:
         plan = self._load_plan(plan_id)
         self.session.delete(plan)
         self.session.commit()
 
-    def _load_plan(self, plan_id: str) -> PlanOrmModel:
-        plan = self.session.get(PlanOrmModel, plan_id)
+    def _load_plan(self, plan_id: UUID) -> PlanOrmModel:
+        plan = self.session.get(PlanOrmModel, str(plan_id))
         if plan is None:
             raise NotFoundError(f"Plan {plan_id} was not found")
         return plan

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
@@ -24,7 +26,7 @@ def list_plans(service: PlanService = Depends(get_plan_service)) -> list[PlanRes
     response_model_by_alias=True,
 )
 def get_plan(
-    plan_id: str,
+    plan_id: UUID,
     service: PlanService = Depends(get_plan_service),
 ) -> PlanResponse:
     try:
@@ -55,7 +57,7 @@ def create_plan(
     response_model_by_alias=True,
 )
 def update_plan(
-    plan_id: str,
+    plan_id: UUID,
     request: PlanUpsertRequest,
     service: PlanService = Depends(get_plan_service),
 ) -> PlanResponse:
@@ -67,7 +69,7 @@ def update_plan(
 
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_plan(
-    plan_id: str,
+    plan_id: UUID,
     service: PlanService = Depends(get_plan_service),
 ) -> Response:
     try:

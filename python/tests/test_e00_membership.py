@@ -186,6 +186,20 @@ def test_e00_activate_membership_rejects_minor_without_custodian_signature(
     app.dependency_overrides.clear()
 
 
+def test_e00_get_membership_rejects_malformed_membership_id() -> None:
+    client = TestClient(app)
+
+    response = client.get("/api/e00/memberships/not-a-uuid")
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Invalid value for 'membershipId': not-a-uuid",
+        "path": "/api/e00/memberships/not-a-uuid",
+    }
+
+
 def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_memberships(
     tmp_path: Path,
 ) -> None:
