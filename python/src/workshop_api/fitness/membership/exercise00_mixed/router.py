@@ -159,6 +159,7 @@ async def activate_membership(
     invoice_id = str(uuid.uuid4())
     invoice_due_date = start_date + timedelta(days=30)
     now = datetime.now(UTC)
+    external_invoice_id: str | None
 
     external_invoice_request = ExternalInvoiceProviderUpsertRequest(
         customerReference=activation_request.customer_id,
@@ -195,11 +196,15 @@ async def activate_membership(
             else ExternalInvoiceProviderResponse.parse_obj(external_invoice_http_response.json())
         )
 
+    # TODO: allow a nullable external_invoice_id once the workshop baseline no longer
+    # requires this local billing reference column to be non-null.
+    external_invoice_id = (
+        external_invoice.invoice_id if external_invoice is not None else invoice_id
+    )
+
     billing_reference = E00MembershipBillingReferenceOrmModel(
         membership_id=membership.id,
-        external_invoice_id=(
-            external_invoice.invoice_id if external_invoice is not None else invoice_id
-        ),
+        external_invoice_id=external_invoice_id,
         external_invoice_reference=invoice_id,
         due_date=invoice_due_date,
         status="OPEN",
@@ -248,7 +253,7 @@ Codeartify Billing
         startDate=membership.start_date,
         endDate=membership.end_date,
         invoiceId=invoice_id,
-        externalInvoiceId=external_invoice.invoice_id,
+        externalInvoiceId=external_invoice_id,
         invoiceDueDate=invoice_due_date,
     )
 
