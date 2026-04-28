@@ -85,7 +85,8 @@ class E00PaymentReceivedControllerTest {
                 .andExpect(jsonPath("$.billingReferenceId").value(billingReference.getId().toString()))
                 .andExpect(jsonPath("$.previousMembershipStatus").value("ACTIVE"))
                 .andExpect(jsonPath("$.newMembershipStatus").value("ACTIVE"))
-                .andExpect(jsonPath("$.reactivated").value(false));
+                .andExpect(jsonPath("$.reactivated").value(false))
+                .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
 
         E00MembershipBillingReferenceEntity updatedBillingReference = billingReferenceRepository.findById(
                 billingReference.getId()
@@ -132,7 +133,8 @@ class E00PaymentReceivedControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.previousMembershipStatus").value("SUSPENDED"))
                 .andExpect(jsonPath("$.newMembershipStatus").value("ACTIVE"))
-                .andExpect(jsonPath("$.reactivated").value(true));
+                .andExpect(jsonPath("$.reactivated").value(true))
+                .andExpect(jsonPath("$.message").value("Payment recorded; membership reactivated"));
 
         E00MembershipEntity updatedMembership = membershipRepository.findById(membership.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(updatedMembership.getStatus()).isEqualTo("ACTIVE");
@@ -172,9 +174,10 @@ class E00PaymentReceivedControllerTest {
                                   "paidAt": "2026-01-10T10:00:00Z"
                                 }
                                 """))
-                .andExpect(status().isConflict())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reactivated").value(false))
-                .andExpect(jsonPath("$.newMembershipStatus").value("SUSPENDED"));
+                .andExpect(jsonPath("$.newMembershipStatus").value("SUSPENDED"))
+                .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
     }
 
     @Test
@@ -210,9 +213,10 @@ class E00PaymentReceivedControllerTest {
                                   "paidAt": "2026-02-10T10:00:00Z"
                                 }
                                 """))
-                .andExpect(status().isConflict())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reactivated").value(false))
-                .andExpect(jsonPath("$.newMembershipStatus").value("SUSPENDED"));
+                .andExpect(jsonPath("$.newMembershipStatus").value("SUSPENDED"))
+                .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
     }
 
     @Test
@@ -248,8 +252,9 @@ class E00PaymentReceivedControllerTest {
                                   "paidAt": "2026-02-10T10:00:00Z"
                                 }
                                 """))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.newMembershipStatus").value("CANCELLED"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.newMembershipStatus").value("CANCELLED"))
+                .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
     }
 
     @Test
@@ -288,7 +293,8 @@ class E00PaymentReceivedControllerTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reactivated").value(false));
+                .andExpect(jsonPath("$.reactivated").value(false))
+                .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
 
         mockMvc.perform(post("/api/e00/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -302,7 +308,8 @@ class E00PaymentReceivedControllerTest {
                 .andExpect(jsonPath("$.membershipId").value(membership.getId().toString()))
                 .andExpect(jsonPath("$.billingReferenceId").value(billingReference.getId().toString()))
                 .andExpect(jsonPath("$.newMembershipStatus").value("ACTIVE"))
-                .andExpect(jsonPath("$.reactivated").value(false));
+                .andExpect(jsonPath("$.reactivated").value(false))
+                .andExpect(jsonPath("$.message").value("Payment was already recorded; membership status unchanged"));
 
         E00MembershipBillingReferenceEntity updatedBillingReference = billingReferenceRepository.findById(
                 billingReference.getId()

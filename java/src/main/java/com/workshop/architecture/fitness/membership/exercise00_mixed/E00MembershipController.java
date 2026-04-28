@@ -347,6 +347,9 @@ public class E00MembershipController {
         }
 
         paidAt = request.paidAt() == null ? Instant.now() : request.paidAt();
+        message = billingReference.isPaid()
+                ? "Payment was already recorded; membership status unchanged"
+                : "Payment recorded; membership status unchanged";
 
         if (!billingReference.isPaid()) {
             billingReference.markPaid(paidAt);
@@ -363,72 +366,16 @@ public class E00MembershipController {
 
         previousMembershipStatus = membership.getStatus();
         newMembershipStatus = membership.getStatus();
-        message = "Payment recorded";
         reactivated = false;
 
-        if (membership.isActive()) {
-            message = "Membership remains active";
-        } else if (membership.isSuspendedForNonPayment()) {
+        if (membership.isSuspendedForNonPayment()) {
             if (!paidAt.atZone(ZoneOffset.UTC).toLocalDate().isAfter(membership.getEndDate())) {
                 membership.reactivateAfterPayment();
                 membership = membershipRepository.save(membership);
                 newMembershipStatus = membership.getStatus();
-                message = "Membership reactivated after payment";
+                message = "Payment recorded; membership reactivated";
                 reactivated = true;
-                return ResponseEntity.ok(new E00PaymentReceivedResponse(
-                        paidAt,
-                        membership.getId().toString(),
-                        billingReference.getId().toString(),
-                        previousMembershipStatus,
-                        newMembershipStatus,
-                        reactivated,
-                        message
-                ));
             }
-
-            message = "Membership remains suspended because the membership period already ended";
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new E00PaymentReceivedResponse(
-                    paidAt,
-                    membership.getId().toString(),
-                    billingReference.getId().toString(),
-                    previousMembershipStatus,
-                    newMembershipStatus,
-                    reactivated,
-                    message
-            ));
-        } else if (membership.isSuspended()) {
-            message = "Membership remains suspended for a different reason";
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new E00PaymentReceivedResponse(
-                    paidAt,
-                    membership.getId().toString(),
-                    billingReference.getId().toString(),
-                    previousMembershipStatus,
-                    newMembershipStatus,
-                    reactivated,
-                    message
-            ));
-        } else if (membership.isCancelled()) {
-            message = "Membership remains cancelled";
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new E00PaymentReceivedResponse(
-                    paidAt,
-                    membership.getId().toString(),
-                    billingReference.getId().toString(),
-                    previousMembershipStatus,
-                    newMembershipStatus,
-                    reactivated,
-                    message
-            ));
-        } else if ("PENDING".equals(membership.getStatus())) {
-            message = "Pending memberships cannot be activated by payment";
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new E00PaymentReceivedResponse(
-                    paidAt,
-                    membership.getId().toString(),
-                    billingReference.getId().toString(),
-                    previousMembershipStatus,
-                    newMembershipStatus,
-                    reactivated,
-                    message
-            ));
         }
 
         return ResponseEntity.ok(new E00PaymentReceivedResponse(
