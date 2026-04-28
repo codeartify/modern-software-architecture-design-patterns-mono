@@ -87,6 +87,7 @@ public class E00MembershipController {
         E00MembershipBillingReferenceEntity billingReference;
         String email;
         String invoiceId;
+        String externalInvoiceId;
         Instant now;
         LocalDate invoiceDueDate;
         LocalDate startDate;
@@ -152,10 +153,14 @@ public class E00MembershipController {
                 .retrieve()
                 .body(ExternalInvoiceProviderResponse.class);
 
+        // TODO: allow a nullable externalInvoiceId once the workshop baseline no longer
+        // requires this local billing reference column to be non-null.
+        externalInvoiceId = externalInvoice == null ? invoiceId : externalInvoice.invoiceId();
+
         billingReference = billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 membership.getId(),
-                externalInvoice == null ? invoiceId : externalInvoice.invoiceId(),
+                externalInvoiceId,
                 invoiceId,
                 invoiceDueDate,
                 "OPEN",
