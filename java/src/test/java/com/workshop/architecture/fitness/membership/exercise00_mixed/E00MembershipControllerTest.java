@@ -133,6 +133,88 @@ class E00MembershipControllerTest {
     }
 
     @Test
+    void listMembershipsReturnsAllMemberships() {
+        E00MembershipEntity activeMembership = membershipRepository.save(new E00MembershipEntity(
+                UUID.fromString("b7000000-0000-0000-0000-000000000001"),
+                "11111111-1111-1111-1111-111111111111",
+                "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                999,
+                12,
+                "ACTIVE",
+                null,
+                LocalDate.parse("2026-01-01"),
+                LocalDate.parse("2027-01-01")
+        ));
+        E00MembershipEntity suspendedMembership = membershipRepository.save(new E00MembershipEntity(
+                UUID.fromString("b7000000-0000-0000-0000-000000000002"),
+                "22222222-2222-2222-2222-222222222222",
+                "aaaaaa24-aaaa-aaaa-aaaa-aaaaaaaaaa24",
+                1699,
+                24,
+                "SUSPENDED",
+                "NON_PAYMENT",
+                LocalDate.parse("2026-01-01"),
+                LocalDate.parse("2028-01-01")
+        ));
+
+        RestClient client = RestClient.builder()
+                .baseUrl("http://localhost:" + serverPort)
+                .build();
+
+        E00MembershipResponse[] response = client.get()
+                .uri("/api/e00/memberships")
+                .retrieve()
+                .body(E00MembershipResponse[].class);
+
+        assertThat(response).isNotNull();
+        assertThat(response).hasSize(2);
+        assertThat(response)
+                .extracting(E00MembershipResponse::membershipId)
+                .containsExactlyInAnyOrder(
+                        activeMembership.getId().toString(),
+                        suspendedMembership.getId().toString()
+                );
+        assertThat(response)
+                .extracting(E00MembershipResponse::status)
+                .containsExactlyInAnyOrder("ACTIVE", "SUSPENDED");
+    }
+
+    @Test
+    void getMembershipReturnsMembershipById() {
+        E00MembershipEntity membership = membershipRepository.save(new E00MembershipEntity(
+                UUID.fromString("b7000000-0000-0000-0000-000000000003"),
+                "33333333-3333-3333-3333-333333333333",
+                "aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6",
+                599,
+                6,
+                "ACTIVE",
+                null,
+                LocalDate.parse("2026-02-01"),
+                LocalDate.parse("2026-08-01")
+        ));
+
+        RestClient client = RestClient.builder()
+                .baseUrl("http://localhost:" + serverPort)
+                .build();
+
+        E00MembershipResponse response = client.get()
+                .uri("/api/e00/memberships/{membershipId}", membership.getId())
+                .retrieve()
+                .body(E00MembershipResponse.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.membershipId()).isEqualTo(membership.getId().toString());
+        assertThat(response.customerId()).isEqualTo("33333333-3333-3333-3333-333333333333");
+        assertThat(response.planId()).isEqualTo("aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6");
+        assertThat(response.planPrice()).isEqualTo(599);
+        assertThat(response.planDuration()).isEqualTo(6);
+        assertThat(response.status()).isEqualTo("ACTIVE");
+        assertThat(response.reason()).isNull();
+        assertThat(response.startDate()).isEqualTo(LocalDate.parse("2026-02-01"));
+        assertThat(response.endDate()).isEqualTo(LocalDate.parse("2026-08-01"));
+    }
+
+    @Test
     void suspendOverdueMembershipsSuspendsOnlyActiveMembershipsWithOverdueOpenInvoices() {
         E00MembershipEntity activeOverdueMembership = membershipRepository.save(new E00MembershipEntity(
                 UUID.randomUUID(),

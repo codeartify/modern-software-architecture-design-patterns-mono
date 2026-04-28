@@ -205,6 +205,140 @@ def test_e00_get_membership_rejects_malformed_membership_id() -> None:
     }
 
 
+def test_e00_list_memberships_returns_all_memberships(tmp_path: Path) -> None:
+    test_engine = create_engine(
+        f"sqlite:///{tmp_path / 'e00-membership-list-test.db'}",
+        connect_args={"check_same_thread": False},
+    )
+    test_sessionmaker = sessionmaker(
+        bind=test_engine,
+        autoflush=False,
+        autocommit=False,
+        expire_on_commit=False,
+    )
+    Base.metadata.create_all(bind=test_engine, tables=[E00MembershipOrmModel.__table__])
+
+    setup_session = test_sessionmaker()
+    setup_session.add_all(
+        [
+            E00MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000001",
+                customer_id="11111111-1111-1111-1111-111111111111",
+                plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                plan_price=999,
+                plan_duration=12,
+                status="ACTIVE",
+                reason=None,
+                start_date=date(2026, 1, 1),
+                end_date=date(2027, 1, 1),
+            ),
+            E00MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000002",
+                customer_id="22222222-2222-2222-2222-222222222222",
+                plan_id="aaaaaa24-aaaa-aaaa-aaaa-aaaaaaaaaa24",
+                plan_price=1699,
+                plan_duration=24,
+                status="SUSPENDED",
+                reason="NON_PAYMENT",
+                start_date=date(2026, 1, 1),
+                end_date=date(2028, 1, 1),
+            ),
+        ]
+    )
+    setup_session.commit()
+    setup_session.close()
+
+    def get_test_db():
+        override_session = test_sessionmaker()
+        try:
+            yield override_session
+        finally:
+            override_session.close()
+
+    app.dependency_overrides[database.get_db_session] = get_test_db
+    client = TestClient(app)
+
+    response = client.get("/api/e00/memberships")
+
+    assert response.status_code == 200
+    assert response.json()[0]["membershipId"] == "b7000000-0000-0000-0000-000000000001"
+    assert response.json()[0]["customerId"] == "11111111-1111-1111-1111-111111111111"
+    assert response.json()[0]["planId"] == "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12"
+    assert response.json()[0]["planPrice"] == 999
+    assert response.json()[0]["planDuration"] == 12
+    assert response.json()[0]["status"] == "ACTIVE"
+    assert response.json()[0]["reason"] is None
+    assert response.json()[0]["startDate"] == "2026-01-01"
+    assert response.json()[0]["endDate"] == "2027-01-01"
+    assert response.json()[1]["membershipId"] == "b7000000-0000-0000-0000-000000000002"
+    assert response.json()[1]["customerId"] == "22222222-2222-2222-2222-222222222222"
+    assert response.json()[1]["planId"] == "aaaaaa24-aaaa-aaaa-aaaa-aaaaaaaaaa24"
+    assert response.json()[1]["planPrice"] == 1699
+    assert response.json()[1]["planDuration"] == 24
+    assert response.json()[1]["status"] == "SUSPENDED"
+    assert response.json()[1]["reason"] == "NON_PAYMENT"
+    assert response.json()[1]["startDate"] == "2026-01-01"
+    assert response.json()[1]["endDate"] == "2028-01-01"
+
+    app.dependency_overrides.clear()
+
+
+def test_e00_get_membership_returns_membership_by_id(tmp_path: Path) -> None:
+    test_engine = create_engine(
+        f"sqlite:///{tmp_path / 'e00-membership-get-test.db'}",
+        connect_args={"check_same_thread": False},
+    )
+    test_sessionmaker = sessionmaker(
+        bind=test_engine,
+        autoflush=False,
+        autocommit=False,
+        expire_on_commit=False,
+    )
+    Base.metadata.create_all(bind=test_engine, tables=[E00MembershipOrmModel.__table__])
+
+    setup_session = test_sessionmaker()
+    setup_session.add(
+        E00MembershipOrmModel(
+            id="b7000000-0000-0000-0000-000000000003",
+            customer_id="33333333-3333-3333-3333-333333333333",
+            plan_id="aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6",
+            plan_price=599,
+            plan_duration=6,
+            status="ACTIVE",
+            reason=None,
+            start_date=date(2026, 2, 1),
+            end_date=date(2026, 8, 1),
+        )
+    )
+    setup_session.commit()
+    setup_session.close()
+
+    def get_test_db():
+        override_session = test_sessionmaker()
+        try:
+            yield override_session
+        finally:
+            override_session.close()
+
+    app.dependency_overrides[database.get_db_session] = get_test_db
+    client = TestClient(app)
+
+    response = client.get("/api/e00/memberships/b7000000-0000-0000-0000-000000000003")
+
+    assert response.status_code == 200
+    assert response.json()["membershipId"] == "b7000000-0000-0000-0000-000000000003"
+    assert response.json()["customerId"] == "33333333-3333-3333-3333-333333333333"
+    assert response.json()["planId"] == "aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6"
+    assert response.json()["planPrice"] == 599
+    assert response.json()["planDuration"] == 6
+    assert response.json()["status"] == "ACTIVE"
+    assert response.json()["reason"] is None
+    assert response.json()["startDate"] == "2026-02-01"
+    assert response.json()["endDate"] == "2026-08-01"
+
+    app.dependency_overrides.clear()
+
+
 def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_memberships(
     tmp_path: Path,
 ) -> None:
