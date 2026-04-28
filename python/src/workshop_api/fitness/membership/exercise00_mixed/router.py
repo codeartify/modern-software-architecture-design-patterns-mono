@@ -260,23 +260,34 @@ async def suspend_overdue_memberships(
     )
     checked_at_date = checked_at.date()
 
+    memberships = session.query(E00MembershipOrmModel).all()
+    open_billing_references = (
+        session.query(E00MembershipBillingReferenceOrmModel)
+        .filter(E00MembershipBillingReferenceOrmModel.status == "OPEN")
+        .all()
+    )
+
     client_kwargs: dict[str, object] = {"base_url": external_invoice_provider_base_url}
     if external_invoice_provider_base_url.startswith("http://testserver"):
         client_kwargs["transport"] = httpx.ASGITransport(app=request.app)
 
-    async with httpx.AsyncClient(**client_kwargs) as client:
-        external_invoice_http_response = await client.get("/api/external-invoice-provider/invoices")
-        external_invoice_http_response.raise_for_status()
-        external_invoices = [
-            (
-                ExternalInvoiceProviderResponse.model_validate(item)
-                if hasattr(ExternalInvoiceProviderResponse, "model_validate")
-                else ExternalInvoiceProviderResponse.parse_obj(item)
+    try:
+        async with httpx.AsyncClient(**client_kwargs) as client:
+            external_invoice_http_response = await client.get(
+                "/api/external-invoice-provider/invoices"
             )
-            for item in external_invoice_http_response.json()
-        ]
+            external_invoice_http_response.raise_for_status()
+            external_invoices = [
+                (
+                    ExternalInvoiceProviderResponse.model_validate(item)
+                    if hasattr(ExternalInvoiceProviderResponse, "model_validate")
+                    else ExternalInvoiceProviderResponse.parse_obj(item)
+                )
+                for item in external_invoice_http_response.json()
+            ]
+    except httpx.HTTPError:
+        external_invoices = []
 
-    memberships = session.query(E00MembershipOrmModel).all()
     checked_memberships = 0
     suspended_membership_ids: list[str] = []
 
@@ -285,17 +296,40 @@ async def suspend_overdue_memberships(
             continue
 
         checked_memberships += 1
-        has_overdue_unpaid_invoice = any(
-            invoice.contract_reference == membership.id
-            and invoice.status == ExternalInvoiceProviderStatus.OPEN
-            and invoice.due_date < checked_at_date
-            for invoice in external_invoices
+        overdue_billing_reference = next(
+            (
+                billing_reference
+                for billing_reference in open_billing_references
+                if billing_reference.membership_id == membership.id
+                and billing_reference.due_date < checked_at_date
+            ),
+            None,
         )
 
-        if has_overdue_unpaid_invoice:
-            membership.status = "SUSPENDED"
-            membership.reason = "NON_PAYMENT"
-            suspended_membership_ids.append(membership.id)
+        if overdue_billing_reference is None:
+            continue
+
+        matching_external_invoice = next(
+            (
+                invoice
+                for invoice in external_invoices
+                if invoice.invoice_id == overdue_billing_reference.external_invoice_id
+                or invoice.external_correlation_id
+                == overdue_billing_reference.external_invoice_reference
+                or invoice.contract_reference == membership.id
+            ),
+            None,
+        )
+
+        if (
+            matching_external_invoice is not None
+            and matching_external_invoice.status != ExternalInvoiceProviderStatus.OPEN
+        ):
+            continue
+
+        membership.status = "SUSPENDED"
+        membership.reason = "NON_PAYMENT"
+        suspended_membership_ids.append(membership.id)
 
     session.commit()
 

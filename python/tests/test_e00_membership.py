@@ -390,6 +390,17 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
         start_date=date(2026, 1, 1),
         end_date=date(2027, 1, 1),
     )
+    active_paid_membership = E00MembershipOrmModel(
+        id="membership-active-paid",
+        customer_id="11111111-1111-1111-1111-111111111111",
+        plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+        plan_price=999,
+        plan_duration=12,
+        status="ACTIVE",
+        reason=None,
+        start_date=date(2026, 1, 1),
+        end_date=date(2027, 1, 1),
+    )
     suspended_membership = E00MembershipOrmModel(
         id="membership-suspended",
         customer_id="11111111-1111-1111-1111-111111111111",
@@ -416,8 +427,59 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
         [
             active_overdue_membership,
             active_not_overdue_membership,
+            active_paid_membership,
             suspended_membership,
             cancelled_membership,
+            E00MembershipBillingReferenceOrmModel(
+                id="billing-active-overdue",
+                membership_id="membership-active-overdue",
+                external_invoice_id="external-overdue-1",
+                external_invoice_reference="corr-overdue-1",
+                due_date=date(2026, 4, 1),
+                status="OPEN",
+                created_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+                updated_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="billing-active-current",
+                membership_id="membership-active-current",
+                external_invoice_id="external-future-1",
+                external_invoice_reference="corr-future-1",
+                due_date=date(2026, 5, 10),
+                status="OPEN",
+                created_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+                updated_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="billing-active-paid",
+                membership_id="membership-active-paid",
+                external_invoice_id="external-paid-1",
+                external_invoice_reference="corr-paid-1",
+                due_date=date(2026, 4, 1),
+                status="PAID",
+                created_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+                updated_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="billing-suspended",
+                membership_id="membership-suspended",
+                external_invoice_id="external-suspended-1",
+                external_invoice_reference="corr-suspended-1",
+                due_date=date(2026, 4, 1),
+                status="OPEN",
+                created_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+                updated_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="billing-cancelled",
+                membership_id="membership-cancelled",
+                external_invoice_id="external-cancelled-1",
+                external_invoice_reference="corr-cancelled-1",
+                due_date=date(2026, 4, 1),
+                status="OPEN",
+                created_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+                updated_at=datetime.fromisoformat("2026-01-01T10:00:00+00:00"),
+            ),
         ]
     )
     setup_session.commit()
@@ -476,10 +538,24 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
         ),
     )
     external_invoice_store.save(
-        "external-paid-1",
+        "external-suspended-1",
         ExternalInvoiceProviderUpsertRequest(
             customerReference="11111111-1111-1111-1111-111111111111",
             contractReference="membership-suspended",
+            amountInCents=999,
+            currency="CHF",
+            dueDate="2026-04-01",
+            status="OPEN",
+            description="Suspended membership invoice",
+            externalCorrelationId="corr-suspended-1",
+            metadata={"exercise": "e00"},
+        ),
+    )
+    external_invoice_store.save(
+        "external-paid-1",
+        ExternalInvoiceProviderUpsertRequest(
+            customerReference="11111111-1111-1111-1111-111111111111",
+            contractReference="membership-active-paid",
             amountInCents=999,
             currency="CHF",
             dueDate="2026-04-01",
@@ -497,7 +573,7 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
     )
 
     assert response.status_code == 200
-    assert response.json()["checkedMemberships"] == 2
+    assert response.json()["checkedMemberships"] == 3
     assert response.json()["suspendedMembershipIds"] == ["membership-active-overdue"]
 
     verification_session = test_sessionmaker()
@@ -518,6 +594,10 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
         == "ACTIVE"
     )
     assert (
+        verification_session.get(E00MembershipOrmModel, "membership-active-paid").status
+        == "ACTIVE"
+    )
+    assert (
         verification_session.get(E00MembershipOrmModel, "membership-suspended").status
         == "SUSPENDED"
     )
@@ -533,7 +613,7 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
     )
 
     assert second_response.status_code == 200
-    assert second_response.json()["checkedMemberships"] == 1
+    assert second_response.json()["checkedMemberships"] == 2
     assert second_response.json()["suspendedMembershipIds"] == []
 
     app.dependency_overrides.clear()
