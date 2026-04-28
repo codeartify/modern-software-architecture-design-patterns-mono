@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -242,19 +240,8 @@ public class E00MembershipController {
         LocalDate checkedAtDate = checkedAt.atZone(ZoneOffset.UTC).toLocalDate();
         List<E00MembershipEntity> memberships = membershipRepository.findAll();
         List<E00MembershipBillingReferenceEntity> openBillingReferences = billingReferenceRepository.findByStatus("OPEN");
-        List<ExternalInvoiceProviderResponse> externalInvoices;
         List<String> suspendedMembershipIds = new ArrayList<>();
         int checkedMemberships = 0;
-
-        try {
-            ExternalInvoiceProviderResponse[] invoiceResponses = restClient.get()
-                    .uri("/api/shared/external-invoice-provider/invoices")
-                    .retrieve()
-                    .body(ExternalInvoiceProviderResponse[].class);
-            externalInvoices = invoiceResponses == null ? List.of() : Arrays.asList(invoiceResponses);
-        } catch (RestClientException ignored) {
-            externalInvoices = List.of();
-        }
 
         for (E00MembershipEntity membership : memberships) {
             if (!"ACTIVE".equals(membership.getStatus())) {
@@ -270,20 +257,6 @@ public class E00MembershipController {
                     .orElse(null);
 
             if (overdueBillingReference == null) {
-                continue;
-            }
-
-            ExternalInvoiceProviderResponse matchingExternalInvoice = externalInvoices.stream()
-                    .filter(invoice ->
-                            overdueBillingReference.getExternalInvoiceId().equals(invoice.invoiceId())
-                                    || overdueBillingReference.getExternalInvoiceReference()
-                                    .equals(invoice.externalCorrelationId())
-                                    || membership.getId().toString().equals(invoice.contractReference())
-                    )
-                    .findFirst()
-                    .orElse(null);
-
-            if (matchingExternalInvoice != null && matchingExternalInvoice.status() != ExternalInvoiceProviderStatus.OPEN) {
                 continue;
             }
 

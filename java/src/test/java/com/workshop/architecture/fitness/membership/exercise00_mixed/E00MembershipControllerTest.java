@@ -5,12 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.workshop.architecture.fitness.email.InMemoryEmailService;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStore;
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStatus;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -313,62 +311,6 @@ class E00MembershipControllerTest {
                 "OPEN",
                 Instant.parse("2026-01-01T10:00:00Z"),
                 Instant.parse("2026-01-01T10:00:00Z")
-        ));
-
-        externalInvoiceProviderStore.save("external-overdue-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
-                activeOverdueMembership.getCustomerId(),
-                activeOverdueMembership.getId().toString(),
-                activeOverdueMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Overdue invoice",
-                "corr-overdue-1",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-future-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
-                activeNotOverdueMembership.getCustomerId(),
-                activeNotOverdueMembership.getId().toString(),
-                activeNotOverdueMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-05-10"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Future invoice",
-                "corr-future-1",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-cancelled-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
-                cancelledMembership.getCustomerId(),
-                cancelledMembership.getId().toString(),
-                cancelledMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Cancelled membership invoice",
-                "corr-cancelled-1",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-suspended-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
-                suspendedMembership.getCustomerId(),
-                suspendedMembership.getId().toString(),
-                suspendedMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Suspended membership invoice",
-                "corr-suspended-1",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-paid-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
-                activePaidMembership.getCustomerId(),
-                activePaidMembership.getId().toString(),
-                activePaidMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.PAID,
-                "Paid invoice",
-                "corr-paid-1",
-                Map.of("exercise", "e00")
         ));
 
         RestClient client = RestClient.builder()

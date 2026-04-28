@@ -5,12 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStatus;
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStore;
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,16 +37,12 @@ class E00SuspendOverdueMembershipsControllerTest {
     @Autowired
     private E00MembershipBillingReferenceRepository billingReferenceRepository;
 
-    @Autowired
-    private ExternalInvoiceProviderStore externalInvoiceProviderStore;
-
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         billingReferenceRepository.deleteAll();
         membershipRepository.deleteAll();
-        externalInvoiceProviderStore.clear();
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
@@ -164,62 +156,6 @@ class E00SuspendOverdueMembershipsControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
 
-        externalInvoiceProviderStore.save("external-open-overdue", new ExternalInvoiceProviderUpsertRequest(
-                activeOverdueMembership.getCustomerId(),
-                activeOverdueMembership.getId().toString(),
-                activeOverdueMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Overdue invoice",
-                "local-open-overdue",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-paid", new ExternalInvoiceProviderUpsertRequest(
-                activePaidMembership.getCustomerId(),
-                activePaidMembership.getId().toString(),
-                activePaidMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.PAID,
-                "Paid invoice",
-                "local-paid",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-future", new ExternalInvoiceProviderUpsertRequest(
-                activeFutureMembership.getCustomerId(),
-                activeFutureMembership.getId().toString(),
-                activeFutureMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-05-10"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Future invoice",
-                "local-future",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-suspended", new ExternalInvoiceProviderUpsertRequest(
-                suspendedMembership.getCustomerId(),
-                suspendedMembership.getId().toString(),
-                suspendedMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Suspended membership invoice",
-                "local-suspended",
-                Map.of("exercise", "e00")
-        ));
-        externalInvoiceProviderStore.save("external-cancelled", new ExternalInvoiceProviderUpsertRequest(
-                cancelledMembership.getCustomerId(),
-                cancelledMembership.getId().toString(),
-                cancelledMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Cancelled membership invoice",
-                "local-cancelled",
-                Map.of("exercise", "e00")
-        ));
-
         mockMvc.perform(post("/api/e00/memberships/suspend-overdue")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -269,18 +205,6 @@ class E00SuspendOverdueMembershipsControllerTest {
                 "OPEN",
                 Instant.parse("2026-01-01T10:00:00Z"),
                 Instant.parse("2026-01-01T10:00:00Z")
-        ));
-
-        externalInvoiceProviderStore.save("external-open-overdue", new ExternalInvoiceProviderUpsertRequest(
-                activeOverdueMembership.getCustomerId(),
-                activeOverdueMembership.getId().toString(),
-                activeOverdueMembership.getPlanPrice(),
-                "CHF",
-                LocalDate.parse("2026-04-01"),
-                ExternalInvoiceProviderStatus.OPEN,
-                "Overdue invoice",
-                "local-open-overdue",
-                Map.of("exercise", "e00")
         ));
 
         mockMvc.perform(post("/api/e00/memberships/suspend-overdue")
