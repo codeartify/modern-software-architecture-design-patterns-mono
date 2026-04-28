@@ -8,6 +8,7 @@ import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoi
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStatus;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
@@ -229,6 +230,17 @@ class E00MembershipControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
+        E00MembershipEntity activePaidMembership = membershipRepository.save(new E00MembershipEntity(
+                UUID.randomUUID(),
+                "11111111-1111-1111-1111-111111111111",
+                "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                999,
+                12,
+                "ACTIVE",
+                null,
+                LocalDate.parse("2026-01-01"),
+                LocalDate.parse("2027-01-01")
+        ));
         E00MembershipEntity suspendedMembership = membershipRepository.save(new E00MembershipEntity(
                 UUID.randomUUID(),
                 "11111111-1111-1111-1111-111111111111",
@@ -250,6 +262,57 @@ class E00MembershipControllerTest {
                 null,
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
+        ));
+
+        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+                UUID.randomUUID(),
+                activeOverdueMembership.getId(),
+                "external-overdue-1",
+                "corr-overdue-1",
+                LocalDate.parse("2026-04-01"),
+                "OPEN",
+                Instant.parse("2026-01-01T10:00:00Z"),
+                Instant.parse("2026-01-01T10:00:00Z")
+        ));
+        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+                UUID.randomUUID(),
+                activeNotOverdueMembership.getId(),
+                "external-future-1",
+                "corr-future-1",
+                LocalDate.parse("2026-05-10"),
+                "OPEN",
+                Instant.parse("2026-01-01T10:00:00Z"),
+                Instant.parse("2026-01-01T10:00:00Z")
+        ));
+        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+                UUID.randomUUID(),
+                activePaidMembership.getId(),
+                "external-paid-1",
+                "corr-paid-1",
+                LocalDate.parse("2026-04-01"),
+                "PAID",
+                Instant.parse("2026-01-01T10:00:00Z"),
+                Instant.parse("2026-01-01T10:00:00Z")
+        ));
+        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+                UUID.randomUUID(),
+                suspendedMembership.getId(),
+                "external-suspended-1",
+                "corr-suspended-1",
+                LocalDate.parse("2026-04-01"),
+                "OPEN",
+                Instant.parse("2026-01-01T10:00:00Z"),
+                Instant.parse("2026-01-01T10:00:00Z")
+        ));
+        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+                UUID.randomUUID(),
+                cancelledMembership.getId(),
+                "external-cancelled-1",
+                "corr-cancelled-1",
+                LocalDate.parse("2026-04-01"),
+                "OPEN",
+                Instant.parse("2026-01-01T10:00:00Z"),
+                Instant.parse("2026-01-01T10:00:00Z")
         ));
 
         externalInvoiceProviderStore.save("external-overdue-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
@@ -285,10 +348,21 @@ class E00MembershipControllerTest {
                 "corr-cancelled-1",
                 Map.of("exercise", "e00")
         ));
-        externalInvoiceProviderStore.save("external-paid-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
+        externalInvoiceProviderStore.save("external-suspended-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
                 suspendedMembership.getCustomerId(),
                 suspendedMembership.getId().toString(),
                 suspendedMembership.getPlanPrice(),
+                "CHF",
+                LocalDate.parse("2026-04-01"),
+                ExternalInvoiceProviderStatus.OPEN,
+                "Suspended membership invoice",
+                "corr-suspended-1",
+                Map.of("exercise", "e00")
+        ));
+        externalInvoiceProviderStore.save("external-paid-1", new com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest(
+                activePaidMembership.getCustomerId(),
+                activePaidMembership.getId().toString(),
+                activePaidMembership.getPlanPrice(),
                 "CHF",
                 LocalDate.parse("2026-04-01"),
                 ExternalInvoiceProviderStatus.PAID,
@@ -313,13 +387,15 @@ class E00MembershipControllerTest {
                 .body(E00SuspendOverdueMembershipsResponse.class);
 
         assertThat(response).isNotNull();
-        assertThat(response.checkedMemberships()).isEqualTo(2);
+        assertThat(response.checkedMemberships()).isEqualTo(3);
         assertThat(response.suspendedMembershipIds()).containsExactly(activeOverdueMembership.getId().toString());
         assertThat(membershipRepository.findById(activeOverdueMembership.getId()).orElseThrow().getStatus())
                 .isEqualTo("SUSPENDED");
         assertThat(membershipRepository.findById(activeOverdueMembership.getId()).orElseThrow().getReason())
                 .isEqualTo("NON_PAYMENT");
         assertThat(membershipRepository.findById(activeNotOverdueMembership.getId()).orElseThrow().getStatus())
+                .isEqualTo("ACTIVE");
+        assertThat(membershipRepository.findById(activePaidMembership.getId()).orElseThrow().getStatus())
                 .isEqualTo("ACTIVE");
         assertThat(membershipRepository.findById(suspendedMembership.getId()).orElseThrow().getStatus())
                 .isEqualTo("SUSPENDED");
