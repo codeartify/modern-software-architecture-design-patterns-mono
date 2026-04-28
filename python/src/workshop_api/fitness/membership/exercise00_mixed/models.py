@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Column, Date, Integer, String
+from sqlalchemy import Column, Date, DateTime, Integer, String
 
 from workshop_api.fitness.customer.database import Base
 
@@ -19,3 +20,16 @@ class E00MembershipOrmModel(Base):
     reason = Column(String(100), nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+
+
+class E00MembershipBillingReferenceOrmModel(Base):
+    __tablename__ = "membership_billing_references"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    membership_id = Column(String(36), nullable=False)
+    external_invoice_id = Column(String(100), nullable=False, unique=True)
+    external_invoice_reference = Column(String(100), nullable=False, unique=True)
+    due_date = Column(Date, nullable=False)
+    status = Column(String(50), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)

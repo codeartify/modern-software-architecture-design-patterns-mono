@@ -42,7 +42,10 @@ def get_db_session() -> Generator[Session]:
 
 def init_db() -> None:
     from workshop_api.fitness.customer.models import CustomerOrmModel
-    from workshop_api.fitness.membership.exercise00_mixed.models import E00MembershipOrmModel
+    from workshop_api.fitness.membership.exercise00_mixed.models import (
+        E00MembershipBillingReferenceOrmModel,
+        E00MembershipOrmModel,
+    )
     from workshop_api.fitness.plan.models import PlanOrmModel
 
     try:
@@ -52,6 +55,7 @@ def init_db() -> None:
                 CustomerOrmModel.__table__,
                 PlanOrmModel.__table__,
                 E00MembershipOrmModel.__table__,
+                E00MembershipBillingReferenceOrmModel.__table__,
             ],
         )
     except OperationalError as error:

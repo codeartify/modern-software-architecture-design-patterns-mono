@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from workshop_api.fitness.customer.database import get_db_session
@@ -17,12 +18,16 @@ from workshop_api.fitness.external_invoice_provider.schemas import (
     ExternalInvoiceProviderResponse,
     ExternalInvoiceProviderUpsertRequest,
 )
-from workshop_api.fitness.membership.exercise00_mixed.models import E00MembershipOrmModel
+from workshop_api.fitness.membership.exercise00_mixed.models import (
+    E00MembershipBillingReferenceOrmModel,
+    E00MembershipOrmModel,
+)
 from workshop_api.fitness.membership.exercise00_mixed.schemas import (
     E00ActivateMembershipRequest,
     E00ActivateMembershipResponse,
     E00MembershipResponse,
     E00PaymentReceivedRequest,
+    E00PaymentReceivedResponse,
     E00SuspendOverdueMembershipsRequest,
     E00SuspendOverdueMembershipsResponse,
 )
@@ -37,6 +42,12 @@ def get_external_invoice_provider_base_url() -> str:
 
 def get_billing_sender_email_address() -> str:
     return os.getenv("WORKSHOP_BILLING_SENDER_EMAIL_ADDRESS", "billing@codeartify.com")
+
+
+def _response_content(response_model: E00PaymentReceivedResponse) -> dict[str, object]:
+    if hasattr(response_model, "model_dump"):
+        return response_model.model_dump(by_alias=True, mode="json")
+    return json.loads(response_model.json(by_alias=True))
 
 
 @router.post(
@@ -97,6 +108,7 @@ async def activate_membership(
 
     invoice_id = str(uuid.uuid4())
     invoice_due_date = start_date + timedelta(days=30)
+    now = datetime.now(UTC)
 
     external_invoice_request = ExternalInvoiceProviderUpsertRequest(
         customerReference=activation_request.customer_id,
@@ -132,6 +144,20 @@ async def activate_membership(
             if hasattr(ExternalInvoiceProviderResponse, "model_validate")
             else ExternalInvoiceProviderResponse.parse_obj(external_invoice_http_response.json())
         )
+
+    billing_reference = E00MembershipBillingReferenceOrmModel(
+        membership_id=membership.id,
+        external_invoice_id=(
+            external_invoice.invoice_id if external_invoice is not None else invoice_id
+        ),
+        external_invoice_reference=invoice_id,
+        due_date=invoice_due_date,
+        status="OPEN",
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(billing_reference)
+    session.commit()
 
     email = """
 To: {to}
@@ -280,11 +306,181 @@ async def suspend_overdue_memberships(
     )
 
 
-@router.post("/payment-received")
+@router.post(
+    "/payment-received",
+    response_model=E00PaymentReceivedResponse,
+    response_model_by_alias=True,
+)
 async def payment_received(
     payment_request: E00PaymentReceivedRequest,
-) -> dict[str, str]:
-    return {
-        "message": "Payment callback accepted",
-        "externalInvoiceId": payment_request.external_invoice_id or "",
-    }
+    session: Session = Depends(get_db_session),
+) -> E00PaymentReceivedResponse | JSONResponse:
+    if (
+        not payment_request.external_invoice_id
+        and not payment_request.external_invoice_reference
+        and not payment_request.membership_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one invoice or membership identifier must be provided",
+        )
+
+    billing_reference = None
+    if payment_request.external_invoice_id:
+        billing_reference = (
+            session.query(E00MembershipBillingReferenceOrmModel)
+            .filter(
+                E00MembershipBillingReferenceOrmModel.external_invoice_id
+                == payment_request.external_invoice_id
+            )
+            .one_or_none()
+        )
+
+    if billing_reference is None and payment_request.external_invoice_reference:
+        billing_reference = (
+            session.query(E00MembershipBillingReferenceOrmModel)
+            .filter(
+                E00MembershipBillingReferenceOrmModel.external_invoice_reference
+                == payment_request.external_invoice_reference
+            )
+            .one_or_none()
+        )
+
+    if billing_reference is None and payment_request.membership_id:
+        billing_reference = (
+            session.query(E00MembershipBillingReferenceOrmModel)
+            .filter(
+                E00MembershipBillingReferenceOrmModel.membership_id
+                == payment_request.membership_id
+            )
+            .first()
+        )
+
+    if billing_reference is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No billing reference was found",
+        )
+
+    paid_at = payment_request.paid_at or datetime.now(UTC)
+
+    if billing_reference.status != "PAID":
+        billing_reference.status = "PAID"
+        billing_reference.updated_at = paid_at
+        session.add(billing_reference)
+
+    membership = session.get(E00MembershipOrmModel, billing_reference.membership_id)
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Membership {billing_reference.membership_id} was not found",
+        )
+
+    previous_membership_status = membership.status
+    new_membership_status = membership.status
+    message = "Payment recorded"
+    reactivated = False
+
+    if membership.status == "ACTIVE":
+        message = "Membership remains active"
+        session.commit()
+        return E00PaymentReceivedResponse(
+            paidAt=paid_at,
+            membershipId=membership.id,
+            billingReferenceId=billing_reference.id,
+            previousMembershipStatus=previous_membership_status,
+            newMembershipStatus=new_membership_status,
+            reactivated=reactivated,
+            message=message,
+        )
+
+    if membership.status == "SUSPENDED" and membership.reason == "NON_PAYMENT":
+        if paid_at.date() <= membership.end_date:
+            membership.status = "ACTIVE"
+            membership.reason = None
+            session.add(membership)
+            session.commit()
+            session.refresh(membership)
+            return E00PaymentReceivedResponse(
+                paidAt=paid_at,
+                membershipId=membership.id,
+                billingReferenceId=billing_reference.id,
+                previousMembershipStatus=previous_membership_status,
+                newMembershipStatus=membership.status,
+                reactivated=True,
+                message="Membership reactivated after payment",
+            )
+
+        session.commit()
+        conflict_response = E00PaymentReceivedResponse(
+            paidAt=paid_at,
+            membershipId=membership.id,
+            billingReferenceId=billing_reference.id,
+            previousMembershipStatus=previous_membership_status,
+            newMembershipStatus=new_membership_status,
+            reactivated=False,
+            message="Membership remains suspended because the membership period already ended",
+        )
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=_response_content(conflict_response),
+        )
+
+    if membership.status == "SUSPENDED":
+        session.commit()
+        conflict_response = E00PaymentReceivedResponse(
+            paidAt=paid_at,
+            membershipId=membership.id,
+            billingReferenceId=billing_reference.id,
+            previousMembershipStatus=previous_membership_status,
+            newMembershipStatus=new_membership_status,
+            reactivated=False,
+            message="Membership remains suspended for a different reason",
+        )
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=_response_content(conflict_response),
+        )
+
+    if membership.status == "CANCELLED":
+        session.commit()
+        conflict_response = E00PaymentReceivedResponse(
+            paidAt=paid_at,
+            membershipId=membership.id,
+            billingReferenceId=billing_reference.id,
+            previousMembershipStatus=previous_membership_status,
+            newMembershipStatus=new_membership_status,
+            reactivated=False,
+            message="Membership remains cancelled",
+        )
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=_response_content(conflict_response),
+        )
+
+    if membership.status == "PENDING":
+        session.commit()
+        conflict_response = E00PaymentReceivedResponse(
+            paidAt=paid_at,
+            membershipId=membership.id,
+            billingReferenceId=billing_reference.id,
+            previousMembershipStatus=previous_membership_status,
+            newMembershipStatus=new_membership_status,
+            reactivated=False,
+            message="Pending memberships cannot be activated by payment",
+        )
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=_response_content(conflict_response),
+        )
+
+    session.commit()
+    return E00PaymentReceivedResponse(
+        paidAt=paid_at,
+        membershipId=membership.id,
+        billingReferenceId=billing_reference.id,
+        previousMembershipStatus=previous_membership_status,
+        newMembershipStatus=new_membership_status,
+        reactivated=reactivated,
+        message=message,
+    )
