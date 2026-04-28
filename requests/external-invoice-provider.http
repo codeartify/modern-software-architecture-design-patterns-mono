@@ -1,5 +1,5 @@
 ### Create external invoice
-POST {{baseUrl}}/api/external-invoice-provider/invoices
+POST {{baseUrl}}{{externalInvoiceProviderBasePath}}
 Content-Type: application/json
 Accept: application/json
 
@@ -22,15 +22,19 @@ Accept: application/json
 %}
 
 ### List external invoices
-GET {{baseUrl}}/api/external-invoice-provider/invoices
+GET {{baseUrl}}{{externalInvoiceProviderBasePath}}
 Accept: application/json
 
 ### Get external invoice by id
-GET {{baseUrl}}/api/external-invoice-provider/invoices/{{externalInvoiceId}}
+GET {{baseUrl}}{{externalInvoiceProviderBasePath}}/{{externalInvoiceId}}
+Accept: application/json
+
+### Mark external invoice as paid and trigger membership callback
+POST {{baseUrl}}{{externalInvoiceProviderBasePath}}/{{externalInvoiceId}}/mark-paid
 Accept: application/json
 
 ### Update external invoice
-PUT {{baseUrl}}/api/external-invoice-provider/invoices/{{externalInvoiceId}}
+PUT {{baseUrl}}{{externalInvoiceProviderBasePath}}/{{externalInvoiceId}}
 Content-Type: application/json
 Accept: application/json
 
@@ -50,5 +54,5 @@ Accept: application/json
 }
 
 ### Delete external invoice
-DELETE {{baseUrl}}/api/external-invoice-provider/invoices/{{externalInvoiceId}}
+DELETE {{baseUrl}}{{externalInvoiceProviderBasePath}}/{{externalInvoiceId}}
 Accept: application/json

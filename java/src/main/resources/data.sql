@@ -9,3 +9,123 @@ MERGE INTO plans (id, title, description, duration_in_months, price) KEY (id) VA
     ('aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6', 'Standard 6 Months', 'Six-month commitment with reduced monthly price', 6, 599.00),
     ('aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12', 'Premium 12 Months', 'Twelve-month plan for regular training', 12, 999.00),
     ('aaaaaa24-aaaa-aaaa-aaaa-aaaaaaaaaa24', 'Elite 24 Months', 'Twenty-four-month plan for long-term training', 24, 1699.00);
+
+MERGE INTO memberships (
+    id, customer_id, plan_id, plan_price, plan_duration, status, reason, start_date, end_date
+) KEY (id) VALUES
+    (
+        'b7000000-0000-0000-0000-000000000001',
+        '11111111-1111-1111-1111-111111111111',
+        'aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12',
+        999,
+        12,
+        'ACTIVE',
+        NULL,
+        DATE '2026-01-01',
+        DATE '2026-12-31'
+    ),
+    (
+        'b7000000-0000-0000-0000-000000000002',
+        '22222222-2222-2222-2222-222222222222',
+        'aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12',
+        999,
+        12,
+        'ACTIVE',
+        NULL,
+        DATE '2026-01-01',
+        DATE '2026-12-31'
+    ),
+    (
+        'b7000000-0000-0000-0000-000000000003',
+        '33333333-3333-3333-3333-333333333333',
+        'aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12',
+        999,
+        12,
+        'ACTIVE',
+        NULL,
+        DATE '2026-01-01',
+        DATE '2026-12-31'
+    ),
+    (
+        'b7000000-0000-0000-0000-000000000004',
+        '11111111-1111-1111-1111-111111111111',
+        'aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12',
+        999,
+        12,
+        'SUSPENDED',
+        'NON_PAYMENT',
+        DATE '2026-01-01',
+        DATE '2026-12-31'
+    ),
+    (
+        'b7000000-0000-0000-0000-000000000005',
+        '22222222-2222-2222-2222-222222222222',
+        'aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12',
+        999,
+        12,
+        'CANCELLED',
+        NULL,
+        DATE '2026-01-01',
+        DATE '2026-12-31'
+    );
+
+MERGE INTO membership_billing_references (
+    id,
+    membership_id,
+    external_invoice_id,
+    external_invoice_reference,
+    due_date,
+    status,
+    created_at,
+    updated_at
+) KEY (id) VALUES
+    (
+        'c7000000-0000-0000-0000-000000000001',
+        'b7000000-0000-0000-0000-000000000001',
+        'seed-external-open-overdue',
+        'seed-local-open-overdue',
+        DATE '2026-05-01',
+        'OPEN',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00'
+    ),
+    (
+        'c7000000-0000-0000-0000-000000000002',
+        'b7000000-0000-0000-0000-000000000002',
+        'seed-external-open-current',
+        'seed-local-open-current',
+        DATE '2026-07-01',
+        'OPEN',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00'
+    ),
+    (
+        'c7000000-0000-0000-0000-000000000003',
+        'b7000000-0000-0000-0000-000000000003',
+        'seed-external-paid',
+        'seed-local-paid',
+        DATE '2026-05-01',
+        'PAID',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00',
+        TIMESTAMP WITH TIME ZONE '2026-02-01 10:00:00+00:00'
+    ),
+    (
+        'c7000000-0000-0000-0000-000000000004',
+        'b7000000-0000-0000-0000-000000000004',
+        'seed-external-suspended',
+        'seed-local-suspended',
+        DATE '2026-05-01',
+        'OPEN',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00'
+    ),
+    (
+        'c7000000-0000-0000-0000-000000000005',
+        'b7000000-0000-0000-0000-000000000005',
+        'seed-external-cancelled',
+        'seed-local-cancelled',
+        DATE '2026-05-01',
+        'OPEN',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00'
+    );

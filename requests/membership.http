@@ -11,6 +11,8 @@ Accept: application/json
 
 > {%
   client.global.set("membershipId", response.body.membershipId);
+  client.global.set("externalInvoiceId", response.body.externalInvoiceId);
+  client.global.set("externalInvoiceReference", response.body.invoiceId);
 %}
 
 ### Suspend membership
@@ -24,4 +26,45 @@ Accept: application/json
 
 {
   "checkedAt": "2026-06-27T10:00:00Z"
+}
+
+### Record payment callback by external invoice id
+POST {{baseUrl}}/api/e00/memberships/payment-received
+Content-Type: application/json
+Accept: application/json
+
+{
+  "externalInvoiceId": "{{externalInvoiceId}}",
+  "paidAt": "2026-06-15T10:00:00Z"
+}
+
+### Record payment callback by external invoice reference
+POST {{baseUrl}}/api/e00/memberships/payment-received
+Content-Type: application/json
+Accept: application/json
+
+{
+  "externalInvoiceReference": "{{externalInvoiceReference}}",
+  "paidAt": "2026-06-15T10:00:00Z"
+}
+
+### Demo: reactivate seeded suspended membership after payment
+POST {{baseUrl}}/api/e00/memberships/payment-received
+Content-Type: application/json
+Accept: application/json
+
+{
+  "externalInvoiceId": "{{seededSuspendedExternalInvoiceId}}",
+  "externalInvoiceReference": "{{seededSuspendedExternalInvoiceReference}}",
+  "membershipId": "{{seededSuspendedNonPaymentMembershipId}}",
+  "paidAt": "2026-06-15T10:00:00Z"
+}
+
+### Demo: mark seeded active-overdue membership for suspension
+POST {{baseUrl}}/api/e00/memberships/suspend-overdue
+Content-Type: application/json
+Accept: application/json
+
+{
+  "checkedAt": "2026-06-15T10:00:00Z"
 }
