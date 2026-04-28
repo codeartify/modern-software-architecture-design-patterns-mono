@@ -11,9 +11,6 @@ from workshop_api.fitness.customer.database import Base
 from workshop_api.fitness.customer.models import CustomerOrmModel
 from workshop_api.fitness.email.service import email_service
 from workshop_api.fitness.external_invoice_provider.router import store as external_invoice_store
-from workshop_api.fitness.external_invoice_provider.schemas import (
-    ExternalInvoiceProviderUpsertRequest,
-)
 from workshop_api.fitness.membership.exercise00_mixed.models import (
     E00MembershipBillingReferenceOrmModel,
     E00MembershipOrmModel,
@@ -345,7 +342,7 @@ def test_e00_suspend_membership_rejects_membership_that_is_not_active(
 
 
 def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_memberships(
-    tmp_path: Path, monkeypatch
+    tmp_path: Path,
 ) -> None:
     test_engine = create_engine(
         f"sqlite:///{tmp_path / 'e00-membership-overdue-test.db'}",
@@ -492,79 +489,7 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
         finally:
             override_session.close()
 
-    monkeypatch.setenv("WORKSHOP_EXTERNAL_INVOICE_PROVIDER_BASE_URL", "http://testserver")
     app.dependency_overrides[database.get_db_session] = get_test_db
-    external_invoice_store.clear()
-    external_invoice_store.save(
-        "external-overdue-1",
-        ExternalInvoiceProviderUpsertRequest(
-            customerReference="11111111-1111-1111-1111-111111111111",
-            contractReference="membership-active-overdue",
-            amountInCents=999,
-            currency="CHF",
-            dueDate="2026-04-01",
-            status="OPEN",
-            description="Overdue invoice",
-            externalCorrelationId="corr-overdue-1",
-            metadata={"exercise": "e00"},
-        ),
-    )
-    external_invoice_store.save(
-        "external-future-1",
-        ExternalInvoiceProviderUpsertRequest(
-            customerReference="11111111-1111-1111-1111-111111111111",
-            contractReference="membership-active-current",
-            amountInCents=999,
-            currency="CHF",
-            dueDate="2026-05-10",
-            status="OPEN",
-            description="Current invoice",
-            externalCorrelationId="corr-future-1",
-            metadata={"exercise": "e00"},
-        ),
-    )
-    external_invoice_store.save(
-        "external-cancelled-1",
-        ExternalInvoiceProviderUpsertRequest(
-            customerReference="11111111-1111-1111-1111-111111111111",
-            contractReference="membership-cancelled",
-            amountInCents=999,
-            currency="CHF",
-            dueDate="2026-04-01",
-            status="OPEN",
-            description="Cancelled membership invoice",
-            externalCorrelationId="corr-cancelled-1",
-            metadata={"exercise": "e00"},
-        ),
-    )
-    external_invoice_store.save(
-        "external-suspended-1",
-        ExternalInvoiceProviderUpsertRequest(
-            customerReference="11111111-1111-1111-1111-111111111111",
-            contractReference="membership-suspended",
-            amountInCents=999,
-            currency="CHF",
-            dueDate="2026-04-01",
-            status="OPEN",
-            description="Suspended membership invoice",
-            externalCorrelationId="corr-suspended-1",
-            metadata={"exercise": "e00"},
-        ),
-    )
-    external_invoice_store.save(
-        "external-paid-1",
-        ExternalInvoiceProviderUpsertRequest(
-            customerReference="11111111-1111-1111-1111-111111111111",
-            contractReference="membership-active-paid",
-            amountInCents=999,
-            currency="CHF",
-            dueDate="2026-04-01",
-            status="PAID",
-            description="Paid invoice",
-            externalCorrelationId="corr-paid-1",
-            metadata={"exercise": "e00"},
-        ),
-    )
     client = TestClient(app)
 
     response = client.post(

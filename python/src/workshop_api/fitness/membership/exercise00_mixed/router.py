@@ -299,9 +299,7 @@ async def suspend_membership(
 )
 async def suspend_overdue_memberships(
     suspend_request: E00SuspendOverdueMembershipsRequest | None = None,
-    request: Request = None,
     session: Session = Depends(get_db_session),
-    external_invoice_provider_base_url: str = Depends(get_external_invoice_provider_base_url),
 ) -> E00SuspendOverdueMembershipsResponse:
     checked_at = (
         suspend_request.checked_at
@@ -316,27 +314,6 @@ async def suspend_overdue_memberships(
         .filter(E00MembershipBillingReferenceOrmModel.status == "OPEN")
         .all()
     )
-
-    client_kwargs: dict[str, object] = {"base_url": external_invoice_provider_base_url}
-    if external_invoice_provider_base_url.startswith("http://testserver"):
-        client_kwargs["transport"] = httpx.ASGITransport(app=request.app)
-
-    try:
-        async with httpx.AsyncClient(**client_kwargs) as client:
-            external_invoice_http_response = await client.get(
-                "/api/external-invoice-provider/invoices"
-            )
-            external_invoice_http_response.raise_for_status()
-            external_invoices = [
-                (
-                    ExternalInvoiceProviderResponse.model_validate(item)
-                    if hasattr(ExternalInvoiceProviderResponse, "model_validate")
-                    else ExternalInvoiceProviderResponse.parse_obj(item)
-                )
-                for item in external_invoice_http_response.json()
-            ]
-    except httpx.HTTPError:
-        external_invoices = []
 
     checked_memberships = 0
     suspended_membership_ids: list[str] = []
@@ -357,24 +334,6 @@ async def suspend_overdue_memberships(
         )
 
         if overdue_billing_reference is None:
-            continue
-
-        matching_external_invoice = next(
-            (
-                invoice
-                for invoice in external_invoices
-                if invoice.invoice_id == overdue_billing_reference.external_invoice_id
-                or invoice.external_correlation_id
-                == overdue_billing_reference.external_invoice_reference
-                or invoice.contract_reference == membership.id
-            ),
-            None,
-        )
-
-        if (
-            matching_external_invoice is not None
-            and matching_external_invoice.status != ExternalInvoiceProviderStatus.OPEN
-        ):
             continue
 
         membership.status = "SUSPENDED"
