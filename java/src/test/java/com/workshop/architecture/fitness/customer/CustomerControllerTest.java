@@ -107,4 +107,25 @@ class CustomerControllerTest {
                 .andExpect(jsonPath("$.message").value("Invalid value for 'customerId': not-a-uuid"))
                 .andExpect(jsonPath("$.path").value("/api/customers/not-a-uuid"));
     }
+
+    @Test
+    void listsCustomersSortedByName() throws Exception {
+        repository.save(new CustomerEntity(
+                UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                "Zoe Zebra",
+                java.time.LocalDate.parse("1992-04-21"),
+                "zoe@example.com"
+        ));
+        repository.save(new CustomerEntity(
+                UUID.fromString("11111111-1111-1111-1111-111111111111"),
+                "Ada Alpha",
+                java.time.LocalDate.parse("1986-08-13"),
+                "ada@example.com"
+        ));
+
+        mockMvc.perform(get("/api/customers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Ada Alpha"))
+                .andExpect(jsonPath("$[1].name").value("Zoe Zebra"));
+    }
 }

@@ -1,5 +1,6 @@
 package com.workshop.architecture.fitness.plan;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ public class PlanService {
 
     public List<PlanResponse> findAll() {
         return repository.findAll().stream()
+                .sorted(Comparator.comparing(PlanEntity::getTitle))
                 .map(PlanResponse::fromEntity)
                 .toList();
     }

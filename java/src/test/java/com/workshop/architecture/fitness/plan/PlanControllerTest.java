@@ -98,4 +98,27 @@ class PlanControllerTest {
         mockMvc.perform(get("/api/plans/{planId}", planId))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void listsPlansSortedByTitle() throws Exception {
+        repository.save(new PlanEntity(
+                UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                "Zeta Plan",
+                "Late alphabet plan",
+                12,
+                new BigDecimal("999.00")
+        ));
+        repository.save(new PlanEntity(
+                UUID.fromString("11111111-1111-1111-1111-111111111111"),
+                "Alpha Plan",
+                "Early alphabet plan",
+                1,
+                new BigDecimal("129.00")
+        ));
+
+        mockMvc.perform(get("/api/plans"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Alpha Plan"))
+                .andExpect(jsonPath("$[1].title").value("Zeta Plan"));
+    }
 }

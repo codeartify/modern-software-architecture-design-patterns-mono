@@ -1,5 +1,6 @@
 package com.workshop.architecture.fitness.customer;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ public class CustomerService {
 
     public List<CustomerResponse> findAll() {
         return repository.findAll().stream()
+                .sorted(Comparator.comparing(CustomerEntity::getName))
                 .map(CustomerResponse::fromEntity)
                 .toList();
     }
