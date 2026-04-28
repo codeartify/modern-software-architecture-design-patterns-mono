@@ -179,7 +179,12 @@ def test_e00_activate_membership_rejects_minor_without_custodian_signature(
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Customers younger than 18 require signedByCustodian=true"
+    assert response.json() == {
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Customers younger than 18 require signedByCustodian=true",
+        "path": "/api/e00/memberships/activate",
+    }
     assert external_invoice_store.list_invoices() == []
     assert email_service.sent_emails() == []
 

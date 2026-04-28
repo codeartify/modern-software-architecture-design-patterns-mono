@@ -67,6 +67,12 @@ def test_external_invoice_provider_crud_flow(monkeypatch) -> None:
         f"/api/shared/external-invoice-provider/invoices/{invoice_id}"
     )
     assert missing_response.status_code == 404
+    assert missing_response.json() == {
+        "status": 404,
+        "error": "Not Found",
+        "message": f"External invoice {invoice_id} was not found",
+        "path": f"/api/shared/external-invoice-provider/invoices/{invoice_id}",
+    }
 
 
 def test_external_invoice_provider_mark_paid_flow(monkeypatch) -> None:

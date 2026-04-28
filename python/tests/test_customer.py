@@ -70,6 +70,12 @@ def test_customer_crud_flow(tmp_path: Path) -> None:
 
     missing_response = client.get(f"/api/customers/{customer_id}")
     assert missing_response.status_code == 404
+    assert missing_response.json() == {
+        "status": 404,
+        "error": "Not Found",
+        "message": f"Customer {customer_id} was not found",
+        "path": f"/api/customers/{customer_id}",
+    }
 
     app.dependency_overrides.clear()
 

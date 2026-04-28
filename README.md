@@ -138,9 +138,3 @@ GitHub Actions runs both stacks on pushes to `main` and on pull requests via [`.
 
 - Java job: `mvn verify`
 - Python job: `uv sync --all-groups`, `uv run ruff check`, `uv run pytest`
-
-## Notes
-
-- The local machine used for scaffolding this repo has Maven installed.
-- `uv` was not installed locally, so the Python project was prepared for `uv` but not executed here.
-- The local machine currently has Python 3.11 installed; the Python project is intentionally pinned to Python 3.14 for the workshop target.

@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Request
+from http import HTTPStatus
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -20,6 +22,22 @@ app.include_router(e00_membership_router)
 app.include_router(plan_router)
 
 
+def _api_error_response(
+    request: Request,
+    status_code: int,
+    message: str,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": status_code,
+            "error": HTTPStatus(status_code).phrase,
+            "message": message,
+            "path": request.url.path,
+        },
+    )
+
+
 @app.exception_handler(RequestValidationError)
 async def handle_request_validation_error(
     request: Request,
@@ -39,15 +57,24 @@ async def handle_request_validation_error(
             invalid_value = request.url.path.rsplit("/", 1)[-1]
         message = f"Invalid value for '{camel_case_parameter_name}': {invalid_value}"
 
-    return JSONResponse(
-        status_code=400,
-        content={
-            "status": 400,
-            "error": "Bad Request",
-            "message": message,
-            "path": request.url.path,
-        },
-    )
+    return _api_error_response(request, 400, message)
+
+
+@app.exception_handler(HTTPException)
+async def handle_http_exception(
+    request: Request,
+    error: HTTPException,
+) -> JSONResponse:
+    message = str(error.detail) if error.detail else HTTPStatus(error.status_code).phrase
+    return _api_error_response(request, error.status_code, message)
+
+
+@app.exception_handler(Exception)
+async def handle_unexpected_exception(
+    request: Request,
+    _: Exception,
+) -> JSONResponse:
+    return _api_error_response(request, 500, "Internal server error")
 
 
 @app.get("/health")
