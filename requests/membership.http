@@ -1,3 +1,11 @@
+### List memberships
+GET {{baseUrl}}/api/e00/memberships
+Accept: application/json
+
+### Get membership by id
+GET {{baseUrl}}/api/e00/memberships/{{membershipId}}
+Accept: application/json
+
 ### Activate membership
 POST {{baseUrl}}/api/e00/memberships/activate
 Content-Type: application/json

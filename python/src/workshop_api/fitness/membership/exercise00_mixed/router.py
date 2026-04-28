@@ -50,6 +50,56 @@ def _response_content(response_model: E00PaymentReceivedResponse) -> dict[str, o
     return json.loads(response_model.json(by_alias=True))
 
 
+@router.get("", response_model=list[E00MembershipResponse], response_model_by_alias=True)
+async def list_memberships(
+    session: Session = Depends(get_db_session),
+) -> list[E00MembershipResponse]:
+    memberships = session.query(E00MembershipOrmModel).all()
+    return [
+        E00MembershipResponse(
+            membershipId=membership.id,
+            customerId=membership.customer_id,
+            planId=membership.plan_id,
+            planPrice=membership.plan_price,
+            planDuration=membership.plan_duration,
+            status=membership.status,
+            reason=membership.reason,
+            startDate=membership.start_date,
+            endDate=membership.end_date,
+        )
+        for membership in memberships
+    ]
+
+
+@router.get(
+    "/{membership_id}",
+    response_model=E00MembershipResponse,
+    response_model_by_alias=True,
+)
+async def get_membership(
+    membership_id: str,
+    session: Session = Depends(get_db_session),
+) -> E00MembershipResponse:
+    membership = session.get(E00MembershipOrmModel, membership_id)
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Membership {membership_id} was not found",
+        )
+
+    return E00MembershipResponse(
+        membershipId=membership.id,
+        customerId=membership.customer_id,
+        planId=membership.plan_id,
+        planPrice=membership.plan_price,
+        planDuration=membership.plan_duration,
+        status=membership.status,
+        reason=membership.reason,
+        startDate=membership.start_date,
+        endDate=membership.end_date,
+    )
+
+
 @router.post(
     "/activate",
     response_model=E00ActivateMembershipResponse,

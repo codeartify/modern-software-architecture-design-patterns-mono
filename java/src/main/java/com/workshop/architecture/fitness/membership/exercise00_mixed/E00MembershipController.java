@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,6 +61,24 @@ public class E00MembershipController {
         this.emailService = emailService;
         this.restClient = restClientBuilder.baseUrl(externalInvoiceProviderBaseUrl).build();
         this.billingSenderEmailAddress = billingSenderEmailAddress;
+    }
+
+    @GetMapping
+    List<E00MembershipResponse> listMemberships() {
+        return membershipRepository.findAll().stream()
+                .map(E00MembershipResponse::fromEntity)
+                .toList();
+    }
+
+    @GetMapping("/{membershipId}")
+    E00MembershipResponse getMembership(@PathVariable String membershipId) {
+        E00MembershipEntity membership = membershipRepository.findById(UUID.fromString(membershipId))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Membership %s was not found".formatted(membershipId)
+                ));
+
+        return E00MembershipResponse.fromEntity(membership);
     }
 
     @PostMapping("/activate")
