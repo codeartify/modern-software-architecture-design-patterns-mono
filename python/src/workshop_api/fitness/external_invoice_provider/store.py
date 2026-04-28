@@ -34,6 +34,13 @@ class ExternalInvoiceProviderStore:
         self._invoices[invoice_id] = response
         return response
 
+    def save_response(
+        self,
+        response: ExternalInvoiceProviderResponse,
+    ) -> ExternalInvoiceProviderResponse:
+        self._invoices[response.invoice_id] = response
+        return response
+
     def delete(self, invoice_id: str) -> None:
         self._invoices.pop(invoice_id, None)
 

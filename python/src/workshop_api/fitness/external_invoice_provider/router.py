@@ -1,9 +1,15 @@
+import json
+import os
 import uuid
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, Response, status
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from workshop_api.fitness.errors import NotFoundError
+from workshop_api.fitness.external_invoice_provider.models import ExternalInvoiceProviderStatus
 from workshop_api.fitness.external_invoice_provider.schemas import (
+    ExternalInvoiceProviderPaymentReceivedCallbackRequest,
     ExternalInvoiceProviderResponse,
     ExternalInvoiceProviderUpsertRequest,
 )
@@ -15,6 +21,10 @@ router = APIRouter(
 )
 
 store = ExternalInvoiceProviderStore()
+
+
+def get_fitness_api_base_url() -> str:
+    return os.getenv("WORKSHOP_FITNESS_API_BASE_URL", "http://127.0.0.1:9090")
 
 
 @router.get("", response_model=list[ExternalInvoiceProviderResponse], response_model_by_alias=True)
@@ -48,6 +58,64 @@ def create_invoice(
     created = store.save(invoice_id, request)
     response.headers["Location"] = f"/api/external-invoice-provider/invoices/{invoice_id}"
     return created
+
+
+@router.post(
+    "/{invoice_id}/mark-paid",
+    response_model=ExternalInvoiceProviderResponse,
+    response_model_by_alias=True,
+)
+async def mark_invoice_paid(
+    invoice_id: str,
+    request: Request,
+    fitness_api_base_url: str = Depends(get_fitness_api_base_url),
+) -> ExternalInvoiceProviderResponse:
+    invoice = store.get_invoice(invoice_id)
+    if invoice is None:
+        raise _not_found(invoice_id)
+
+    if invoice.status == ExternalInvoiceProviderStatus.PAID:
+        return invoice
+
+    paid_invoice = store.save_response(
+        ExternalInvoiceProviderResponse(
+            invoiceId=invoice.invoice_id,
+            customerReference=invoice.customer_reference,
+            contractReference=invoice.contract_reference,
+            amountInCents=invoice.amount_in_cents,
+            currency=invoice.currency,
+            dueDate=invoice.due_date,
+            status=ExternalInvoiceProviderStatus.PAID,
+            description=invoice.description,
+            externalCorrelationId=invoice.external_correlation_id,
+            metadata=invoice.metadata,
+        )
+    )
+
+    callback_request = ExternalInvoiceProviderPaymentReceivedCallbackRequest(
+        externalInvoiceId=paid_invoice.invoice_id,
+        externalInvoiceReference=paid_invoice.external_correlation_id,
+        membershipId=paid_invoice.contract_reference,
+        paidAt=datetime.now(UTC),
+    )
+
+    client_kwargs: dict[str, object] = {"base_url": fitness_api_base_url}
+    if fitness_api_base_url.startswith("http://testserver"):
+        client_kwargs["transport"] = httpx.ASGITransport(app=request.app)
+
+    try:
+        async with httpx.AsyncClient(**client_kwargs) as client:
+            callback_response = await client.post(
+                "/api/e00/memberships/payment-received",
+                json=callback_request.model_dump(by_alias=True, mode="json")
+                if hasattr(callback_request, "model_dump")
+                else json.loads(callback_request.json(by_alias=True)),
+            )
+            callback_response.raise_for_status()
+    except httpx.HTTPError:
+        pass
+
+    return paid_invoice
 
 
 @router.put(

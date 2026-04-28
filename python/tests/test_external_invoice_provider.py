@@ -4,8 +4,9 @@ from workshop_api.fitness.external_invoice_provider.router import store
 from workshop_api.main import app
 
 
-def test_external_invoice_provider_crud_flow() -> None:
+def test_external_invoice_provider_crud_flow(monkeypatch) -> None:
     store.clear()
+    monkeypatch.setenv("WORKSHOP_FITNESS_API_BASE_URL", "http://testserver")
     client = TestClient(app)
 
     create_response = client.post(
@@ -62,3 +63,45 @@ def test_external_invoice_provider_crud_flow() -> None:
 
     missing_response = client.get(f"/api/external-invoice-provider/invoices/{invoice_id}")
     assert missing_response.status_code == 404
+
+
+def test_external_invoice_provider_mark_paid_flow(monkeypatch) -> None:
+    store.clear()
+    monkeypatch.setenv("WORKSHOP_FITNESS_API_BASE_URL", "http://testserver")
+    client = TestClient(app)
+
+    create_response = client.post(
+        "/api/external-invoice-provider/invoices",
+        json={
+            "customerReference": "customer-adult-1",
+            "contractReference": "membership-001",
+            "amountInCents": 99900,
+            "currency": "CHF",
+            "dueDate": "2026-05-27",
+            "status": "OPEN",
+            "description": "Annual membership invoice",
+            "externalCorrelationId": "activation-123",
+            "metadata": {
+                "origin": "fitness-system",
+            },
+        },
+    )
+
+    assert create_response.status_code == 201
+    invoice_id = create_response.json()["invoiceId"]
+
+    mark_paid_response = client.post(
+        f"/api/external-invoice-provider/invoices/{invoice_id}/mark-paid"
+    )
+
+    assert mark_paid_response.status_code == 200
+    assert mark_paid_response.json()["invoiceId"] == invoice_id
+    assert mark_paid_response.json()["status"] == "PAID"
+    assert mark_paid_response.json()["externalCorrelationId"] == "activation-123"
+
+    second_mark_paid_response = client.post(
+        f"/api/external-invoice-provider/invoices/{invoice_id}/mark-paid"
+    )
+
+    assert second_mark_paid_response.status_code == 200
+    assert second_mark_paid_response.json()["status"] == "PAID"

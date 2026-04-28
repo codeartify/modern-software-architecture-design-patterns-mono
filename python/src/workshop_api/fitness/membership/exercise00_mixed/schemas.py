@@ -63,3 +63,28 @@ class E00SuspendOverdueMembershipsResponse(BaseModel):
         alias="suspendedMembershipIds",
         serialization_alias="suspendedMembershipIds",
     )
+
+
+class E00PaymentReceivedRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    external_invoice_id: str | None = Field(
+        default=None,
+        alias="externalInvoiceId",
+        serialization_alias="externalInvoiceId",
+    )
+    external_invoice_reference: str | None = Field(
+        default=None,
+        alias="externalInvoiceReference",
+        serialization_alias="externalInvoiceReference",
+    )
+    membership_id: str | None = Field(
+        default=None,
+        alias="membershipId",
+        serialization_alias="membershipId",
+    )
+    paid_at: datetime | None = Field(
+        default=None,
+        alias="paidAt",
+        serialization_alias="paidAt",
+    )

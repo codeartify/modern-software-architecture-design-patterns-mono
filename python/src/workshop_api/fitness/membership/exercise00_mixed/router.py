@@ -22,6 +22,7 @@ from workshop_api.fitness.membership.exercise00_mixed.schemas import (
     E00ActivateMembershipRequest,
     E00ActivateMembershipResponse,
     E00MembershipResponse,
+    E00PaymentReceivedRequest,
     E00SuspendOverdueMembershipsRequest,
     E00SuspendOverdueMembershipsResponse,
 )
@@ -277,3 +278,13 @@ async def suspend_overdue_memberships(
         checkedMemberships=checked_memberships,
         suspendedMembershipIds=suspended_membership_ids,
     )
+
+
+@router.post("/payment-received")
+async def payment_received(
+    payment_request: E00PaymentReceivedRequest,
+) -> dict[str, str]:
+    return {
+        "message": "Payment callback accepted",
+        "externalInvoiceId": payment_request.external_invoice_id or "",
+    }
