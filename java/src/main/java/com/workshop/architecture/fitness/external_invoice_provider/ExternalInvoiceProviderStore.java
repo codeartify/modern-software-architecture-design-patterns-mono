@@ -37,6 +37,11 @@ public class ExternalInvoiceProviderStore {
         return response;
     }
 
+    public ExternalInvoiceProviderResponse save(ExternalInvoiceProviderResponse response) {
+        invoices.put(response.invoiceId(), response);
+        return response;
+    }
+
     public void delete(String invoiceId) {
         invoices.remove(invoiceId);
     }

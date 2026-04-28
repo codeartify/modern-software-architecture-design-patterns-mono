@@ -256,4 +256,12 @@ public class E00MembershipController {
                 suspendedMembershipIds
         );
     }
+
+    @PostMapping("/payment-received")
+    Map<String, String> paymentReceived(@RequestBody E00PaymentReceivedRequest request) {
+        return Map.of(
+                "message", "Payment callback accepted",
+                "externalInvoiceId", request.externalInvoiceId() == null ? "" : request.externalInvoiceId()
+        );
+    }
 }

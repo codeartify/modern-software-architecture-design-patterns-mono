@@ -11,15 +11,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.Map;
 
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStatus;
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStore;
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -27,6 +26,15 @@ import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 class ExternalInvoiceProviderControllerTest {
+
+    @DynamicPropertySource
+    static void registerProperties(DynamicPropertyRegistry registry) {
+        registry.add(
+                "spring.datasource.url",
+                () -> "jdbc:h2:mem:external-invoice-provider-test;DB_CLOSE_DELAY=-1"
+        );
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+    }
 
     @Autowired
     private WebApplicationContext webApplicationContext;
@@ -108,5 +116,40 @@ class ExternalInvoiceProviderControllerTest {
 
         mockMvc.perform(get("/api/shared/external-invoice-provider/invoices/{invoiceId}", invoiceId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void marksOpenInvoiceAsPaidAndTriggersMembershipCallbackOnlyOnce() throws Exception {
+        String createPayload = objectMapper.writeValueAsString(new ExternalInvoiceProviderUpsertRequest(
+                "customer-adult-1",
+                "membership-001",
+                99900,
+                "CHF",
+                LocalDate.parse("2026-05-27"),
+                ExternalInvoiceProviderStatus.OPEN,
+                "Annual membership invoice",
+                "activation-123",
+                Map.of("origin", "fitness-system")
+        ));
+
+        String createdJson = mockMvc.perform(post("/api/shared/external-invoice-provider/invoices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createPayload))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String invoiceId = objectMapper.readTree(createdJson).get("invoiceId").asText();
+
+        mockMvc.perform(post("/api/shared/external-invoice-provider/invoices/{invoiceId}/mark-paid", invoiceId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.invoiceId").value(invoiceId))
+                .andExpect(jsonPath("$.status").value("PAID"))
+                .andExpect(jsonPath("$.externalCorrelationId").value("activation-123"));
+
+        mockMvc.perform(post("/api/shared/external-invoice-provider/invoices/{invoiceId}/mark-paid", invoiceId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PAID"));
     }
 }
