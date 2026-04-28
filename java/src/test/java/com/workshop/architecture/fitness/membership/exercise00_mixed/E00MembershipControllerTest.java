@@ -4,13 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.workshop.architecture.fitness.email.InMemoryEmailService;
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderResponse;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStore;
 import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStatus;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.LocalDate;
-import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +42,9 @@ class E00MembershipControllerTest {
     private E00MembershipRepository membershipRepository;
 
     @Autowired
+    private E00MembershipBillingReferenceRepository billingReferenceRepository;
+
+    @Autowired
     private ExternalInvoiceProviderStore externalInvoiceProviderStore;
 
     @Autowired
@@ -52,6 +53,7 @@ class E00MembershipControllerTest {
     @BeforeEach
     void clearState() {
         membershipRepository.deleteAll();
+        billingReferenceRepository.deleteAll();
         externalInvoiceProviderStore.clear();
         emailService.clear();
     }
@@ -85,6 +87,16 @@ class E00MembershipControllerTest {
         assertThat(externalInvoiceProviderStore.findAll()).hasSize(1);
         assertThat(externalInvoiceProviderStore.findAll().getFirst().contractReference())
                 .isEqualTo(response.membershipId());
+        assertThat(billingReferenceRepository.findAll()).hasSize(1);
+        assertThat(billingReferenceRepository.findAll().getFirst().getMembershipId())
+                .isEqualTo(UUID.fromString(response.membershipId()));
+        assertThat(billingReferenceRepository.findAll().getFirst().getExternalInvoiceId())
+                .isEqualTo(response.externalInvoiceId());
+        assertThat(billingReferenceRepository.findAll().getFirst().getExternalInvoiceReference())
+                .isEqualTo(response.invoiceId());
+        assertThat(billingReferenceRepository.findAll().getFirst().getDueDate())
+                .isEqualTo(response.invoiceDueDate());
+        assertThat(billingReferenceRepository.findAll().getFirst().getStatus()).isEqualTo("OPEN");
         assertThat(emailService.sentEmails()).hasSize(1);
         assertThat(emailService.sentEmails().getFirst()).contains("billing@codeartify.com");
         assertThat(emailService.sentEmails().getFirst()).contains(response.invoiceId());
@@ -188,6 +200,7 @@ class E00MembershipControllerTest {
                 });
 
         assertThat(membershipRepository.findAll()).isEmpty();
+        assertThat(billingReferenceRepository.findAll()).isEmpty();
         assertThat(externalInvoiceProviderStore.findAll()).isEmpty();
         assertThat(emailService.sentEmails()).isEmpty();
     }

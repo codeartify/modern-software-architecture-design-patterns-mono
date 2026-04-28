@@ -34,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class E00MembershipController {
 
     private final E00MembershipRepository membershipRepository;
+    private final E00MembershipBillingReferenceRepository billingReferenceRepository;
     private final CustomerRepository customerRepository;
     private final PlanRepository planRepository;
     private final InMemoryEmailService emailService;
@@ -42,6 +43,7 @@ public class E00MembershipController {
 
     public E00MembershipController(
             E00MembershipRepository membershipRepository,
+            E00MembershipBillingReferenceRepository billingReferenceRepository,
             CustomerRepository customerRepository,
             PlanRepository planRepository,
             InMemoryEmailService emailService,
@@ -50,6 +52,7 @@ public class E00MembershipController {
             @Value("${workshop.billing.sender-email-address}") String billingSenderEmailAddress
     ) {
         this.membershipRepository = membershipRepository;
+        this.billingReferenceRepository = billingReferenceRepository;
         this.customerRepository = customerRepository;
         this.planRepository = planRepository;
         this.emailService = emailService;
@@ -62,8 +65,11 @@ public class E00MembershipController {
         CustomerEntity customer;
         PlanEntity plan;
         E00MembershipEntity membership;
-        E00Invoice invoice;
+        E00MembershipBillingReferenceEntity billingReference;
         String email;
+        String invoiceId;
+        Instant now;
+        LocalDate invoiceDueDate;
         LocalDate startDate;
         LocalDate endDate;
 
@@ -102,27 +108,23 @@ public class E00MembershipController {
                 endDate
         ));
 
-        invoice = new E00Invoice(
-                UUID.randomUUID().toString(),
-                membership.getId().toString(),
-                request.customerId(),
-                membership.getPlanPrice(),
-                LocalDate.now().plusDays(30)
-        );
+        invoiceId = UUID.randomUUID().toString();
+        invoiceDueDate = LocalDate.now().plusDays(30);
+        now = Instant.now();
 
 
         var externalInvoice = restClient.post()
                 .uri("/api/shared/external-invoice-provider/invoices")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ExternalInvoiceProviderUpsertRequest(
-                        invoice.customerId(),
-                        invoice.membershipId(),
-                        invoice.amount(),
+                        request.customerId(),
+                        membership.getId().toString(),
+                        membership.getPlanPrice(),
                         "CHF",
-                        invoice.dueDate(),
+                        invoiceDueDate,
                         ExternalInvoiceProviderStatus.OPEN,
                         "Membership invoice for %s".formatted(plan.getTitle()),
-                        invoice.id(),
+                        invoiceId,
                         Map.of(
                                 "exercise", "e00",
                                 "planId", membership.getPlanId()
@@ -130,6 +132,17 @@ public class E00MembershipController {
                 ))
                 .retrieve()
                 .body(ExternalInvoiceProviderResponse.class);
+
+        billingReference = billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+                UUID.randomUUID(),
+                membership.getId(),
+                externalInvoice == null ? invoiceId : externalInvoice.invoiceId(),
+                invoiceId,
+                invoiceDueDate,
+                "OPEN",
+                now,
+                now
+        ));
 
         email = """
                 |
@@ -154,11 +167,11 @@ public class E00MembershipController {
                 """.formatted(
                 customer.getEmailAddress(),
                 billingSenderEmailAddress,
-                invoice.id(),
-                invoice.id(),
-                invoice.amount(),
-                invoice.dueDate(),
-                invoice.id()
+                invoiceId,
+                invoiceId,
+                membership.getPlanPrice(),
+                invoiceDueDate,
+                invoiceId
         ).replace("\n|", "\n").trim();
 
         System.out.println(email);
@@ -166,7 +179,7 @@ public class E00MembershipController {
         emailService.send(email);
 
         return new E00ActivateMembershipResponse(
-                membership.getId().toString(),
+                billingReference.getMembershipId().toString(),
                 membership.getCustomerId(),
                 membership.getPlanId(),
                 membership.getPlanPrice(),
@@ -174,9 +187,9 @@ public class E00MembershipController {
                 membership.getStatus(),
                 membership.getStartDate(),
                 membership.getEndDate(),
-                invoice.id(),
-                externalInvoice == null ? null : externalInvoice.invoiceId(),
-                invoice.dueDate()
+                billingReference.getExternalInvoiceReference(),
+                billingReference.getExternalInvoiceId(),
+                billingReference.getDueDate()
         );
     }
 
