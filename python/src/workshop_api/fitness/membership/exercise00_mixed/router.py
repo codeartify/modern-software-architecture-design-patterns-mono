@@ -2,7 +2,6 @@ import calendar
 import json
 import os
 import uuid
-from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
@@ -29,15 +28,6 @@ from workshop_api.fitness.membership.exercise00_mixed.schemas import (
 from workshop_api.fitness.plan.models import PlanOrmModel
 
 router = APIRouter(prefix="/api/e00/memberships", tags=["membership-e00"])
-
-
-@dataclass
-class E00Invoice:
-    id: str
-    membership_id: str
-    customer_id: str
-    amount: int
-    due_date: date
 
 
 def get_external_invoice_provider_base_url() -> str:
@@ -104,23 +94,18 @@ async def activate_membership(
     session.commit()
     session.refresh(membership)
 
-    invoice = E00Invoice(
-        id=str(uuid.uuid4()),
-        membership_id=membership.id,
-        customer_id=activation_request.customer_id,
-        amount=membership.plan_price,
-        due_date=start_date + timedelta(days=30),
-    )
+    invoice_id = str(uuid.uuid4())
+    invoice_due_date = start_date + timedelta(days=30)
 
     external_invoice_request = ExternalInvoiceProviderUpsertRequest(
-        customerReference=invoice.customer_id,
-        contractReference=invoice.membership_id,
-        amountInCents=invoice.amount,
+        customerReference=activation_request.customer_id,
+        contractReference=membership.id,
+        amountInCents=membership.plan_price,
         currency="CHF",
-        dueDate=invoice.due_date,
+        dueDate=invoice_due_date,
         status=ExternalInvoiceProviderStatus.OPEN,
         description=f"Membership invoice for {plan.title}",
-        externalCorrelationId=invoice.id,
+        externalCorrelationId=invoice_id,
         metadata={
             "exercise": "e00",
             "planId": membership.plan_id,
@@ -168,9 +153,9 @@ Codeartify Billing
 """.strip().format(
         to=customer.email_address,
         sender=billing_sender_email_address,
-        invoice_id=invoice.id,
-        amount=invoice.amount,
-        due_date=invoice.due_date,
+        invoice_id=invoice_id,
+        amount=membership.plan_price,
+        due_date=invoice_due_date,
     )
     print(email)
     email_service.send(email)
@@ -185,9 +170,9 @@ Codeartify Billing
         reason=membership.reason,
         startDate=membership.start_date,
         endDate=membership.end_date,
-        invoiceId=invoice.id,
+        invoiceId=invoice_id,
         externalInvoiceId=external_invoice.invoice_id,
-        invoiceDueDate=invoice.due_date,
+        invoiceDueDate=invoice_due_date,
     )
 
 
