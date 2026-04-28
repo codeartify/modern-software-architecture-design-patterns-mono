@@ -153,8 +153,6 @@ public class E00MembershipController {
                 .retrieve()
                 .body(ExternalInvoiceProviderResponse.class);
 
-        // TODO: allow a nullable externalInvoiceId once the workshop baseline no longer
-        // requires this local billing reference column to be non-null.
         externalInvoiceId = externalInvoice == null ? invoiceId : externalInvoice.invoiceId();
 
         billingReference = billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
