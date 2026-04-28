@@ -90,4 +90,13 @@ public class E00MembershipBillingReferenceEntity {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public boolean isPaid() {
+        return "PAID".equals(status);
+    }
+
+    public void markPaid(Instant paidAt) {
+        this.status = "PAID";
+        this.updatedAt = paidAt;
+    }
 }

@@ -99,6 +99,22 @@ public class E00MembershipEntity {
         return endDate;
     }
 
+    public boolean isActive() {
+        return "ACTIVE".equals(status);
+    }
+
+    public boolean isSuspended() {
+        return "SUSPENDED".equals(status);
+    }
+
+    public boolean isSuspendedForNonPayment() {
+        return isSuspended() && "NON_PAYMENT".equals(reason);
+    }
+
+    public boolean isCancelled() {
+        return "CANCELLED".equals(status);
+    }
+
     public void suspend() {
         this.status = "SUSPENDED";
     }
@@ -106,5 +122,10 @@ public class E00MembershipEntity {
     public void suspendForNonPayment() {
         this.status = "SUSPENDED";
         this.reason = "NON_PAYMENT";
+    }
+
+    public void reactivateAfterPayment() {
+        this.status = "ACTIVE";
+        this.reason = null;
     }
 }
