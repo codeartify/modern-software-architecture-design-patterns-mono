@@ -217,26 +217,6 @@ public class E00MembershipController {
         );
     }
 
-    @PostMapping("/{membershipId}/suspend")
-    E00MembershipResponse suspendMembership(@PathVariable String membershipId) {
-        E00MembershipEntity membership = membershipRepository.findById(UUID.fromString(membershipId))
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Membership %s was not found".formatted(membershipId)
-                ));
-
-        if (!"ACTIVE".equals(membership.getStatus())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Membership %s must be ACTIVE to suspend".formatted(membershipId)
-            );
-        }
-
-        membership.suspend();
-        membership = membershipRepository.save(membership);
-        return E00MembershipResponse.fromEntity(membership);
-    }
-
     @PostMapping("/suspend-overdue")
     E00SuspendOverdueMembershipsResponse suspendOverdueMemberships(
             @RequestBody(required = false) E00SuspendOverdueMembershipsRequest request

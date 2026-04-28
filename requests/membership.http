@@ -23,10 +23,6 @@ Accept: application/json
   client.global.set("externalInvoiceReference", response.body.invoiceId);
 %}
 
-### Suspend membership
-POST {{baseUrl}}/api/e00/memberships/{{membershipId}}/suspend
-Accept: application/json
-
 ### Suspend overdue memberships
 POST {{baseUrl}}/api/e00/memberships/suspend-overdue
 Content-Type: application/json
