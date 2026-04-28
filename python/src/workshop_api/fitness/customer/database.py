@@ -1,9 +1,11 @@
 import os
 from collections.abc import Generator
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -40,6 +42,211 @@ def get_db_session() -> Generator[Session]:
         session.close()
 
 
+def seed_demo_data() -> None:
+    from workshop_api.fitness.customer.models import CustomerOrmModel
+    from workshop_api.fitness.membership.exercise00_mixed.models import (
+        E00MembershipBillingReferenceOrmModel,
+        E00MembershipOrmModel,
+    )
+    from workshop_api.fitness.plan.models import PlanOrmModel
+
+    seeded_at = datetime(2026, 1, 1, 10, 0, tzinfo=UTC)
+    updated_paid_at = datetime(2026, 2, 1, 10, 0, tzinfo=UTC)
+    session = SessionLocal()
+    try:
+        for customer in [
+            CustomerOrmModel(
+                id="11111111-1111-1111-1111-111111111111",
+                name="Alice Active",
+                date_of_birth=date(1986, 8, 13),
+                email_address="alice.active@example.com",
+            ),
+            CustomerOrmModel(
+                id="22222222-2222-2222-2222-222222222222",
+                name="Bob Builder",
+                date_of_birth=date(1992, 4, 21),
+                email_address="bob.builder@example.com",
+            ),
+            CustomerOrmModel(
+                id="33333333-3333-3333-3333-333333333333",
+                name="Carla Coach",
+                date_of_birth=date(1978, 11, 5),
+                email_address="carla.coach@example.com",
+            ),
+            CustomerOrmModel(
+                id="44444444-4444-4444-4444-444444444444",
+                name="Mila Minor",
+                date_of_birth=date(2010, 9, 14),
+                email_address="mila.minor@example.com",
+            ),
+        ]:
+            session.merge(customer)
+
+        for plan in [
+            PlanOrmModel(
+                id="aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+                title="Basic 1 Month",
+                description="Flexible monthly membership plan",
+                duration_in_months=1,
+                price=Decimal("129.00"),
+            ),
+            PlanOrmModel(
+                id="aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6",
+                title="Standard 6 Months",
+                description="Six-month commitment with reduced monthly price",
+                duration_in_months=6,
+                price=Decimal("599.00"),
+            ),
+            PlanOrmModel(
+                id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                title="Premium 12 Months",
+                description="Twelve-month plan for regular training",
+                duration_in_months=12,
+                price=Decimal("999.00"),
+            ),
+            PlanOrmModel(
+                id="aaaaaa24-aaaa-aaaa-aaaa-aaaaaaaaaa24",
+                title="Elite 24 Months",
+                description="Twenty-four-month plan for long-term training",
+                duration_in_months=24,
+                price=Decimal("1699.00"),
+            ),
+        ]:
+            session.merge(plan)
+
+        for membership in [
+            E00MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000001",
+                customer_id="11111111-1111-1111-1111-111111111111",
+                plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                plan_price=999,
+                plan_duration=12,
+                status="ACTIVE",
+                reason=None,
+                start_date=date(2026, 1, 1),
+                end_date=date(2026, 12, 31),
+            ),
+            E00MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000002",
+                customer_id="22222222-2222-2222-2222-222222222222",
+                plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                plan_price=999,
+                plan_duration=12,
+                status="ACTIVE",
+                reason=None,
+                start_date=date(2026, 1, 1),
+                end_date=date(2026, 12, 31),
+            ),
+            E00MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000003",
+                customer_id="33333333-3333-3333-3333-333333333333",
+                plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                plan_price=999,
+                plan_duration=12,
+                status="ACTIVE",
+                reason=None,
+                start_date=date(2026, 1, 1),
+                end_date=date(2026, 12, 31),
+            ),
+            E00MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000004",
+                customer_id="11111111-1111-1111-1111-111111111111",
+                plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                plan_price=999,
+                plan_duration=12,
+                status="SUSPENDED",
+                reason="NON_PAYMENT",
+                start_date=date(2026, 1, 1),
+                end_date=date(2026, 12, 31),
+            ),
+            E00MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000005",
+                customer_id="22222222-2222-2222-2222-222222222222",
+                plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                plan_price=999,
+                plan_duration=12,
+                status="CANCELLED",
+                reason=None,
+                start_date=date(2026, 1, 1),
+                end_date=date(2026, 12, 31),
+            ),
+        ]:
+            session.merge(membership)
+
+        for billing_reference in [
+            E00MembershipBillingReferenceOrmModel(
+                id="c7000000-0000-0000-0000-000000000001",
+                membership_id="b7000000-0000-0000-0000-000000000001",
+                external_invoice_id="seed-external-open-overdue",
+                external_invoice_reference="seed-local-open-overdue",
+                due_date=date(2026, 5, 1),
+                status="OPEN",
+                created_at=seeded_at,
+                updated_at=seeded_at,
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="c7000000-0000-0000-0000-000000000002",
+                membership_id="b7000000-0000-0000-0000-000000000002",
+                external_invoice_id="seed-external-open-current",
+                external_invoice_reference="seed-local-open-current",
+                due_date=date(2026, 7, 1),
+                status="OPEN",
+                created_at=seeded_at,
+                updated_at=seeded_at,
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="c7000000-0000-0000-0000-000000000003",
+                membership_id="b7000000-0000-0000-0000-000000000003",
+                external_invoice_id="seed-external-paid",
+                external_invoice_reference="seed-local-paid",
+                due_date=date(2026, 5, 1),
+                status="PAID",
+                created_at=seeded_at,
+                updated_at=updated_paid_at,
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="c7000000-0000-0000-0000-000000000004",
+                membership_id="b7000000-0000-0000-0000-000000000004",
+                external_invoice_id="seed-external-suspended",
+                external_invoice_reference="seed-local-suspended",
+                due_date=date(2026, 5, 1),
+                status="OPEN",
+                created_at=seeded_at,
+                updated_at=seeded_at,
+            ),
+            E00MembershipBillingReferenceOrmModel(
+                id="c7000000-0000-0000-0000-000000000005",
+                membership_id="b7000000-0000-0000-0000-000000000005",
+                external_invoice_id="seed-external-cancelled",
+                external_invoice_reference="seed-local-cancelled",
+                due_date=date(2026, 5, 1),
+                status="OPEN",
+                created_at=seeded_at,
+                updated_at=seeded_at,
+            ),
+        ]:
+            session.merge(billing_reference)
+
+        session.commit()
+    finally:
+        session.close()
+
+
+def ensure_workshop_schema() -> None:
+    if not DATABASE_URL.startswith("sqlite"):
+        return
+
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+    if "memberships" in existing_tables:
+        membership_columns = {
+            column["name"] for column in inspector.get_columns("memberships")
+        }
+        if "reason" not in membership_columns:
+            with engine.begin() as connection:
+                connection.execute(text("ALTER TABLE memberships ADD COLUMN reason VARCHAR(100)"))
+
+
 def init_db() -> None:
     from workshop_api.fitness.customer.models import CustomerOrmModel
     from workshop_api.fitness.membership.exercise00_mixed.models import (
@@ -58,6 +265,8 @@ def init_db() -> None:
                 E00MembershipBillingReferenceOrmModel.__table__,
             ],
         )
+        ensure_workshop_schema()
+        seed_demo_data()
     except OperationalError as error:
         if "readonly" in str(error).lower():
             return
