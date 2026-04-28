@@ -259,45 +259,6 @@ Codeartify Billing
 
 
 @router.post(
-    "/{membership_id}/suspend",
-    response_model=E00MembershipResponse,
-    response_model_by_alias=True,
-)
-async def suspend_membership(
-    membership_id: str,
-    session: Session = Depends(get_db_session),
-) -> E00MembershipResponse:
-    membership = session.get(E00MembershipOrmModel, membership_id)
-    if membership is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Membership {membership_id} was not found",
-        )
-
-    if membership.status != "ACTIVE":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Membership {membership_id} must be ACTIVE to suspend",
-        )
-
-    membership.status = "SUSPENDED"
-    session.commit()
-    session.refresh(membership)
-
-    return E00MembershipResponse(
-        membershipId=membership.id,
-        customerId=membership.customer_id,
-        planId=membership.plan_id,
-        planPrice=membership.plan_price,
-        planDuration=membership.plan_duration,
-        status=membership.status,
-        reason=membership.reason,
-        startDate=membership.start_date,
-        endDate=membership.end_date,
-    )
-
-
-@router.post(
     "/suspend-overdue",
     response_model=E00SuspendOverdueMembershipsResponse,
     response_model_by_alias=True,
