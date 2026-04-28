@@ -25,12 +25,20 @@ import org.springframework.web.client.RestClientResponseException;
 class E00MembershipControllerTest {
 
     private static final int TEST_PORT = findFreePort();
+    private static final String EXERCISE_NUMBER = "00";
+//    private static final String EXERCISE_NUMBER = "01";
+//    private static final String EXERCISE_NUMBER = "02";
+//    private static final String EXERCISE_NUMBER = "03";
+//    private static final String EXERCISE_NUMBER = "04";
+//    private static final String EXERCISE_NUMBER = "05";
+//    private static final String EXERCISE_NUMBER = "06";
+    private static final String EXERCISE_MEMBERSHIPS_BASE_PATH = "/api/e%s/memberships".formatted(EXERCISE_NUMBER);
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add("server.port", () -> TEST_PORT);
         registry.add("workshop.external-invoice-provider.base-url", () -> "http://localhost:" + TEST_PORT);
-        registry.add("spring.datasource.url", () -> "jdbc:h2:mem:e00-mixed-test;DB_CLOSE_DELAY=-1");
+        registry.add("spring.datasource.url", () -> "jdbc:h2:mem:e" + EXERCISE_NUMBER + "-mixed-test;DB_CLOSE_DELAY=-1");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
     }
 
@@ -64,7 +72,7 @@ class E00MembershipControllerTest {
                 .build();
 
         E00ActivateMembershipResponse response = client.post()
-                .uri("/api/e00/memberships/activate")
+                .uri(EXERCISE_MEMBERSHIPS_BASE_PATH + "/activate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
                         {
@@ -108,7 +116,7 @@ class E00MembershipControllerTest {
                 .build();
 
         assertThatThrownBy(() -> client.post()
-                .uri("/api/e00/memberships/activate")
+                .uri(EXERCISE_MEMBERSHIPS_BASE_PATH + "/activate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
                         {
@@ -135,7 +143,7 @@ class E00MembershipControllerTest {
     @Test
     void listMembershipsReturnsAllMemberships() {
         E00MembershipEntity activeMembership = membershipRepository.save(new E00MembershipEntity(
-                UUID.fromString("b7000000-0000-0000-0000-000000000001"),
+                UUID.fromString("b7" + EXERCISE_NUMBER + "0000-0000-0000-0000-000000000001"),
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
                 999,
@@ -146,7 +154,7 @@ class E00MembershipControllerTest {
                 LocalDate.parse("2027-01-01")
         ));
         E00MembershipEntity suspendedMembership = membershipRepository.save(new E00MembershipEntity(
-                UUID.fromString("b7000000-0000-0000-0000-000000000002"),
+                UUID.fromString("b7" + EXERCISE_NUMBER + "0000-0000-0000-0000-000000000002"),
                 "22222222-2222-2222-2222-222222222222",
                 "aaaaaa24-aaaa-aaaa-aaaa-aaaaaaaaaa24",
                 1699,
@@ -162,7 +170,7 @@ class E00MembershipControllerTest {
                 .build();
 
         E00MembershipResponse[] response = client.get()
-                .uri("/api/e00/memberships")
+                .uri(EXERCISE_MEMBERSHIPS_BASE_PATH)
                 .retrieve()
                 .body(E00MembershipResponse[].class);
 
@@ -182,7 +190,7 @@ class E00MembershipControllerTest {
     @Test
     void getMembershipReturnsMembershipById() {
         E00MembershipEntity membership = membershipRepository.save(new E00MembershipEntity(
-                UUID.fromString("b7000000-0000-0000-0000-000000000003"),
+                UUID.fromString("b7" + EXERCISE_NUMBER + "0000-0000-0000-0000-000000000003"),
                 "33333333-3333-3333-3333-333333333333",
                 "aaaaaaa6-aaaa-aaaa-aaaa-aaaaaaaaaaa6",
                 599,
@@ -198,7 +206,7 @@ class E00MembershipControllerTest {
                 .build();
 
         E00MembershipResponse response = client.get()
-                .uri("/api/e00/memberships/{membershipId}", membership.getId())
+                .uri(EXERCISE_MEMBERSHIPS_BASE_PATH + "/{membershipId}", membership.getId())
                 .retrieve()
                 .body(E00MembershipResponse.class);
 
@@ -279,8 +287,8 @@ class E00MembershipControllerTest {
                 "corr-overdue-1",
                 LocalDate.parse("2026-04-01"),
                 "OPEN",
-                Instant.parse("2026-01-01T10:00:00Z"),
-                Instant.parse("2026-01-01T10:00:00Z")
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z"),
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z")
         ));
         billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
@@ -289,8 +297,8 @@ class E00MembershipControllerTest {
                 "corr-future-1",
                 LocalDate.parse("2026-05-10"),
                 "OPEN",
-                Instant.parse("2026-01-01T10:00:00Z"),
-                Instant.parse("2026-01-01T10:00:00Z")
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z"),
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z")
         ));
         billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
@@ -299,8 +307,8 @@ class E00MembershipControllerTest {
                 "corr-paid-1",
                 LocalDate.parse("2026-04-01"),
                 "PAID",
-                Instant.parse("2026-01-01T10:00:00Z"),
-                Instant.parse("2026-01-01T10:00:00Z")
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z"),
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z")
         ));
         billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
@@ -309,8 +317,8 @@ class E00MembershipControllerTest {
                 "corr-suspended-1",
                 LocalDate.parse("2026-04-01"),
                 "OPEN",
-                Instant.parse("2026-01-01T10:00:00Z"),
-                Instant.parse("2026-01-01T10:00:00Z")
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z"),
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z")
         ));
         billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
@@ -319,8 +327,8 @@ class E00MembershipControllerTest {
                 "corr-cancelled-1",
                 LocalDate.parse("2026-04-01"),
                 "OPEN",
-                Instant.parse("2026-01-01T10:00:00Z"),
-                Instant.parse("2026-01-01T10:00:00Z")
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z"),
+                Instant.parse("2026-01-01T10:" + EXERCISE_NUMBER + ":00Z")
         ));
 
         RestClient client = RestClient.builder()
@@ -328,7 +336,7 @@ class E00MembershipControllerTest {
                 .build();
 
         E00SuspendOverdueMembershipsResponse response = client.post()
-                .uri("/api/e00/memberships/suspend-overdue")
+                .uri(EXERCISE_MEMBERSHIPS_BASE_PATH + "/suspend-overdue")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
                         {

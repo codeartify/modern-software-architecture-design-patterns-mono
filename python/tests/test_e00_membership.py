@@ -18,6 +18,16 @@ from workshop_api.fitness.membership.exercise00_mixed.models import (
 from workshop_api.fitness.plan.models import PlanOrmModel
 from workshop_api.main import app
 
+# Switch to "/api/e01/memberships", "/api/e02/memberships", etc. for later exercises.
+EXERCISE_NUMBER="00"
+# EXERCISE_NUMBER="01"
+# EXERCISE_NUMBER="02"
+# EXERCISE_NUMBER="03"
+# EXERCISE_NUMBER="04"
+# EXERCISE_NUMBER="05"
+# EXERCISE_NUMBER="06"
+EXERCISE_MEMBERSHIPS_BASE_PATH = "/api/e"+EXERCISE_NUMBER+"/memberships"
+
 
 def test_e00_activate_membership_creates_membership_invoice_and_email(
     tmp_path: Path, monkeypatch
@@ -78,7 +88,7 @@ def test_e00_activate_membership_creates_membership_invoice_and_email(
     client = TestClient(app)
 
     response = client.post(
-        "/api/e00/memberships/activate",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/activate",
         json={
             "customerId": "11111111-1111-1111-1111-111111111111",
             "planId": "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -171,7 +181,7 @@ def test_e00_activate_membership_rejects_minor_without_custodian_signature(
     client = TestClient(app)
 
     response = client.post(
-        "/api/e00/memberships/activate",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/activate",
         json={
             "customerId": "44444444-4444-4444-4444-444444444444",
             "planId": "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -183,7 +193,7 @@ def test_e00_activate_membership_rejects_minor_without_custodian_signature(
         "status": 400,
         "error": "Bad Request",
         "message": "Customers younger than 18 require signedByCustodian=true",
-        "path": "/api/e00/memberships/activate",
+        "path": f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/activate",
     }
     assert external_invoice_store.list_invoices() == []
     assert email_service.sent_emails() == []
@@ -194,14 +204,14 @@ def test_e00_activate_membership_rejects_minor_without_custodian_signature(
 def test_e00_get_membership_rejects_malformed_membership_id() -> None:
     client = TestClient(app)
 
-    response = client.get("/api/e00/memberships/not-a-uuid")
+    response = client.get(f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/not-a-uuid")
 
     assert response.status_code == 400
     assert response.json() == {
         "status": 400,
         "error": "Bad Request",
         "message": "Invalid value for 'membershipId': not-a-uuid",
-        "path": "/api/e00/memberships/not-a-uuid",
+        "path": f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/not-a-uuid",
     }
 
 
@@ -258,7 +268,7 @@ def test_e00_list_memberships_returns_all_memberships(tmp_path: Path) -> None:
     app.dependency_overrides[database.get_db_session] = get_test_db
     client = TestClient(app)
 
-    response = client.get("/api/e00/memberships")
+    response = client.get(EXERCISE_MEMBERSHIPS_BASE_PATH)
 
     assert response.status_code == 200
     assert response.json()[0]["membershipId"] == "b7000000-0000-0000-0000-000000000001"
@@ -323,7 +333,9 @@ def test_e00_get_membership_returns_membership_by_id(tmp_path: Path) -> None:
     app.dependency_overrides[database.get_db_session] = get_test_db
     client = TestClient(app)
 
-    response = client.get("/api/e00/memberships/b7000000-0000-0000-0000-000000000003")
+    response = client.get(
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/b7000000-0000-0000-0000-000000000003"
+    )
 
     assert response.status_code == 200
     assert response.json()["membershipId"] == "b7000000-0000-0000-0000-000000000003"
@@ -491,7 +503,7 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
     client = TestClient(app)
 
     response = client.post(
-        "/api/e00/memberships/suspend-overdue",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/suspend-overdue",
         json={"checkedAt": "2026-04-27T10:00:00Z"},
     )
 
@@ -531,7 +543,7 @@ def test_e00_suspend_overdue_memberships_suspends_only_active_overdue_membership
     verification_session.close()
 
     second_response = client.post(
-        "/api/e00/memberships/suspend-overdue",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/suspend-overdue",
         json={"checkedAt": "2026-04-27T10:00:00Z"},
     )
 
@@ -603,7 +615,7 @@ def test_e00_payment_received_for_active_membership_marks_billing_reference_paid
     client = TestClient(app)
 
     response = client.post(
-        "/api/e00/memberships/payment-received",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/payment-received",
         json={
             "externalInvoiceId": "external-001",
             "paidAt": "2026-01-15T10:00:00Z",
@@ -690,7 +702,7 @@ def test_e00_payment_received_reactivates_membership_suspended_for_non_payment_w
     client = TestClient(app)
 
     response = client.post(
-        "/api/e00/memberships/payment-received",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/payment-received",
         json={
             "externalInvoiceReference": "local-002",
             "paidAt": "2026-02-15T10:00:00Z",
@@ -774,7 +786,7 @@ def test_e00_payment_received_keeps_suspended_membership_suspended_when_period_h
     client = TestClient(app)
 
     response = client.post(
-        "/api/e00/memberships/payment-received",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/payment-received",
         json={
             "externalInvoiceId": "external-003",
             "paidAt": "2026-01-10T10:00:00Z",
@@ -874,14 +886,14 @@ def test_e00_payment_received_keeps_other_suspensions_and_cancellations_unchange
     client = TestClient(app)
 
     manual_suspended_response = client.post(
-        "/api/e00/memberships/payment-received",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/payment-received",
         json={
             "externalInvoiceId": "external-004",
             "paidAt": "2026-02-10T10:00:00Z",
         },
     )
     cancelled_response = client.post(
-        "/api/e00/memberships/payment-received",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/payment-received",
         json={
             "externalInvoiceId": "external-005",
             "paidAt": "2026-02-10T10:00:00Z",
@@ -959,14 +971,14 @@ def test_e00_payment_received_is_idempotent_for_repeated_callbacks(tmp_path: Pat
     client = TestClient(app)
 
     first_response = client.post(
-        "/api/e00/memberships/payment-received",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/payment-received",
         json={
             "externalInvoiceId": "external-006",
             "paidAt": "2026-02-10T10:00:00Z",
         },
     )
     second_response = client.post(
-        "/api/e00/memberships/payment-received",
+        f"{EXERCISE_MEMBERSHIPS_BASE_PATH}/payment-received",
         json={
             "externalInvoiceId": "external-006",
             "paidAt": "2026-02-11T10:00:00Z",
