@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,6 +20,7 @@ class E00ActivateMembershipResponse(BaseModel):
     plan_price: int = Field(alias="planPrice", serialization_alias="planPrice")
     plan_duration: int = Field(alias="planDuration", serialization_alias="planDuration")
     status: str
+    reason: str | None = None
     start_date: date = Field(alias="startDate", serialization_alias="startDate")
     end_date: date = Field(alias="endDate", serialization_alias="endDate")
     invoice_id: str = Field(alias="invoiceId", serialization_alias="invoiceId")
@@ -39,5 +40,26 @@ class E00MembershipResponse(BaseModel):
     plan_price: int = Field(alias="planPrice", serialization_alias="planPrice")
     plan_duration: int = Field(alias="planDuration", serialization_alias="planDuration")
     status: str
+    reason: str | None = None
     start_date: date = Field(alias="startDate", serialization_alias="startDate")
     end_date: date = Field(alias="endDate", serialization_alias="endDate")
+
+
+class E00SuspendOverdueMembershipsRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    checked_at: datetime | None = Field(default=None, alias="checkedAt")
+
+
+class E00SuspendOverdueMembershipsResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    checked_at: datetime = Field(alias="checkedAt", serialization_alias="checkedAt")
+    checked_memberships: int = Field(
+        alias="checkedMemberships",
+        serialization_alias="checkedMemberships",
+    )
+    suspended_membership_ids: list[str] = Field(
+        alias="suspendedMembershipIds",
+        serialization_alias="suspendedMembershipIds",
+    )

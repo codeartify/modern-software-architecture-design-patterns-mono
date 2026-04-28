@@ -23,5 +23,5 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "checkedAt": "2026-04-27T10:00:00Z"
+  "checkedAt": "2026-06-27T10:00:00Z"
 }

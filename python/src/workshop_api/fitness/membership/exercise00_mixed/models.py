@@ -16,5 +16,6 @@ class E00MembershipOrmModel(Base):
     plan_price = Column(Integer, nullable=False)
     plan_duration = Column(Integer, nullable=False)
     status = Column(String(50), nullable=False)
+    reason = Column(String(100), nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
