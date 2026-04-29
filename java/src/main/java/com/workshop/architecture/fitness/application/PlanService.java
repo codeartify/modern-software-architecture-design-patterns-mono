@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.business;
+package com.workshop.architecture.fitness.application;
 
 import java.util.Comparator;
 import java.util.List;

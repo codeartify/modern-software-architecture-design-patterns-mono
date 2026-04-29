@@ -1,5 +1,7 @@
-package com.workshop.architecture.fitness.business;
+package com.workshop.architecture.fitness.application;
 
+import com.workshop.architecture.fitness.application.port.inbound.ActivateMembership;
+import com.workshop.architecture.fitness.application.port.outbound.*;
 import com.workshop.architecture.fitness.infrastructure.*;
 import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderClient;
 import jakarta.transaction.Transactional;
@@ -13,12 +15,18 @@ import java.time.Period;
 import java.util.UUID;
 
 @Service
-public class MembershipService {
+public class MembershipService implements ActivateMembership {
     private final MembershipRepository membershipRepository;
     private final CustomerRepository customerRepository;
     private final PlanRepository planRepository;
     private final InMemoryEmailService emailService;
     private final String billingSenderEmailAddress;
+    private final ForFindingCustomers forFindingCustomers;
+    private final ForFindingPlans forFindingPlans;
+    private final ForStoringMemberships forStoringMemberships;
+    private final ForCreatingInvoices forCreatingInvoices;
+    private final ForStoringBillingReferences forStoringBillingReferences;
+    private final ForSendingEmails forSendingEmails;
 
     private final MembershipBillingReferenceRepository billingReferenceRepository;
     private final ExternalInvoiceProviderClient externalInvoiceProviderClient;
@@ -29,6 +37,12 @@ public class MembershipService {
             PlanRepository planRepository,
             InMemoryEmailService emailService,
             @Value("${workshop.billing.sender-email-address}") String billingSenderEmailAddress,
+            ForFindingCustomers forFindingCustomers,
+            ForFindingPlans forFindingPlans,
+            ForStoringMemberships forStoringMemberships,
+            ForCreatingInvoices forCreatingInvoices,
+            ForStoringBillingReferences forStoringBillingReferences,
+            ForSendingEmails forSendingEmails,
             MembershipBillingReferenceRepository billingReferenceRepository,
             ExternalInvoiceProviderClient externalInvoiceProviderClient
     ) {
@@ -37,17 +51,21 @@ public class MembershipService {
         this.planRepository = planRepository;
         this.emailService = emailService;
         this.billingSenderEmailAddress = billingSenderEmailAddress;
+        this.forFindingCustomers = forFindingCustomers;
+        this.forFindingPlans = forFindingPlans;
+        this.forStoringMemberships = forStoringMemberships;
+        this.forCreatingInvoices = forCreatingInvoices;
+        this.forStoringBillingReferences = forStoringBillingReferences;
+        this.forSendingEmails = forSendingEmails;
         this.billingReferenceRepository = billingReferenceRepository;
         this.externalInvoiceProviderClient = externalInvoiceProviderClient;
     }
 
     @Transactional
+    @Override
     public ActivateMembershipResult activateMembership(ActivateMembershipInput input) {
 
-        var customer = customerRepository.findById(UUID.fromString(input.customerId()))
-                .orElseThrow(() -> new CustomerNotFoundException(
-                        "Customer %s was not found".formatted(input.customerId())
-                ));
+        var customer = forFindingCustomers.findCustomerByIdOrThrow(input);
 
         var plan = planRepository.findById(UUID.fromString(input.planId()))
                 .orElseThrow(() -> new PlanNotFoundException(
@@ -57,7 +75,7 @@ public class MembershipService {
         var startDate = LocalDate.now();
         var endDate = startDate.plusMonths(plan.getDurationInMonths());
 
-        if (Period.between(customer.getDateOfBirth(), startDate).getYears() < 18
+        if (Period.between(customer.dateOfBirth(), startDate).getYears() < 18
                 && !Boolean.TRUE.equals(input.signedByCustodian())) {
             throw new CustomerTooYoungException(
                     "Customers younger than 18 require signedByCustodian=true"
@@ -98,7 +116,7 @@ public class MembershipService {
                 now
         ));
 
-        sendEmail(toEmail(billingReference, customer, membership));
+        sendEmail(toEmail(billingReference, membership, customer.emailAddress()));
 
         return new ActivateMembershipResult(
                 billingReference.getMembershipId().toString(),
@@ -115,11 +133,12 @@ public class MembershipService {
         );
     }
 
-    private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReferenceEntity billingReference, CustomerEntity customer, MembershipEntity membership) {
+
+    private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReferenceEntity billingReference, MembershipEntity membership, String emailAddress) {
         return new CustomerActivateMembershipEmail(
                 billingReference.getExternalInvoiceReference(),
                 billingReference.getDueDate(),
-                customer.getEmailAddress(),
+                emailAddress,
                 membership.getPlanPrice(),
                 """
                         |

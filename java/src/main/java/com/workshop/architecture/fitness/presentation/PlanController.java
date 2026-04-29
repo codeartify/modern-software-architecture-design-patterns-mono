@@ -1,6 +1,6 @@
 package com.workshop.architecture.fitness.presentation;
 
-import com.workshop.architecture.fitness.business.PlanService;
+import com.workshop.architecture.fitness.application.PlanService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;

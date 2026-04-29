@@ -1,7 +1,7 @@
 package com.workshop.architecture.fitness.presentation;
 
-import com.workshop.architecture.fitness.business.ActivateMembershipInput;
-import com.workshop.architecture.fitness.business.MembershipService;
+import com.workshop.architecture.fitness.application.port.inbound.ActivateMembership;
+import com.workshop.architecture.fitness.application.ActivateMembershipInput;
 import com.workshop.architecture.fitness.infrastructure.MembershipEntity;
 import com.workshop.architecture.fitness.infrastructure.MembershipRepository;
 import jakarta.transaction.Transactional;
@@ -18,14 +18,14 @@ import java.util.UUID;
 public class MembershipController {
 
     private final MembershipRepository membershipRepository;
-    private final MembershipService membershipService;
+    private final ActivateMembership activateMembership;
 
     public MembershipController(
             MembershipRepository membershipRepository,
-            MembershipService membershipService
+            ActivateMembership activateMembership
     ) {
         this.membershipRepository = membershipRepository;
-        this.membershipService = membershipService;
+        this.activateMembership = activateMembership;
     }
 
     @GetMapping
@@ -52,7 +52,7 @@ public class MembershipController {
 
         var input = new ActivateMembershipInput(request.customerId(), request.planId(), request.signedByCustodian());
 
-        var result = membershipService.activateMembership(input);
+        var result = activateMembership.activateMembership(input);
         
         return new ActivateMembershipResponse(
                 result.membershipId(),
