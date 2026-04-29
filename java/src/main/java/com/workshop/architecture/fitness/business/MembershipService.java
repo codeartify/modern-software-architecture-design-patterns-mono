@@ -1,13 +1,20 @@
 package com.workshop.architecture.fitness.business;
 
 import com.workshop.architecture.fitness.infrastructure.*;
+import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderResponse;
+import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderStatus;
+import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -17,8 +24,9 @@ public class MembershipService {
     private final PlanRepository planRepository;
     private final InMemoryEmailService emailService;
     private final String billingSenderEmailAddress;
-    private final InvoiceService invoiceService;
 
+    private final MembershipBillingReferenceRepository billingReferenceRepository;
+    private final RestClient restClient;
 
     public MembershipService(
             MembershipRepository membershipRepository,
@@ -26,14 +34,18 @@ public class MembershipService {
             PlanRepository planRepository,
             InMemoryEmailService emailService,
             @Value("${workshop.billing.sender-email-address}") String billingSenderEmailAddress,
-            InvoiceService invoiceService
+            MembershipBillingReferenceRepository billingReferenceRepository,
+            RestClient.Builder restClientBuilder,
+            @Value("${workshop.external-invoice-provider.base-url}") String externalInvoiceProviderBaseUrl
+
     ) {
         this.membershipRepository = membershipRepository;
         this.customerRepository = customerRepository;
         this.planRepository = planRepository;
         this.emailService = emailService;
         this.billingSenderEmailAddress = billingSenderEmailAddress;
-        this.invoiceService = invoiceService;
+        this.billingReferenceRepository = billingReferenceRepository;
+        this.restClient = restClientBuilder.baseUrl(externalInvoiceProviderBaseUrl).build();
     }
 
     @Transactional
@@ -72,7 +84,21 @@ public class MembershipService {
         ));
 
 
-        var billingReference = invoiceService.createInvoice(input.customerId(), membership, plan);
+        var invoiceId = UUID.randomUUID().toString();
+        var invoiceDueDate = LocalDate.now().plusDays(30);
+        var externalInvoiceId = createExternalInvoice(input.customerId(), membership, plan, invoiceDueDate, invoiceId);
+
+        var now = Instant.now();
+        var billingReference = billingReferenceRepository.save(new MembershipBillingReferenceEntity(
+                UUID.randomUUID(),
+                membership.getId(),
+                externalInvoiceId,
+                invoiceId,
+                invoiceDueDate,
+                "OPEN",
+                now,
+                now
+        ));
 
         sendEmail(toEmail(billingReference, customer, membership));
 
@@ -91,6 +117,31 @@ public class MembershipService {
         );
     }
 
+    private String createExternalInvoice(String customerId, MembershipEntity membership, PlanEntity plan, LocalDate invoiceDueDate, String invoiceId) {
+        var request = new ExternalInvoiceProviderUpsertRequest(
+                customerId,
+                membership.getId().toString(),
+                membership.getPlanPrice(),
+                "CHF",
+                invoiceDueDate,
+                ExternalInvoiceProviderStatus.OPEN,
+                "Membership invoice for %s".formatted(plan.getTitle()),
+                invoiceId,
+                Map.of(
+                        "exercise", "membership",
+                        "planId", membership.getPlanId()
+                )
+        );
+
+        var externalInvoice = restClient.post()
+                .uri("/api/shared/external-invoice-provider/invoices")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .body(ExternalInvoiceProviderResponse.class);
+
+        return externalInvoice == null ? invoiceId : externalInvoice.invoiceId();
+    }
     private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReferenceEntity billingReference, CustomerEntity customer, MembershipEntity membership) {
         return new CustomerActivateMembershipEmail(
                 billingReference.getExternalInvoiceReference(),
