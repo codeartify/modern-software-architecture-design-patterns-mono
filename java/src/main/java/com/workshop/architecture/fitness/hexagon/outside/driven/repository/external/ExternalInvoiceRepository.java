@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.hexagon.outside.repository.external;
+package com.workshop.architecture.fitness.hexagon.outside.driven.repository.external;
 
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.ForCreatingInvoices;
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.InvoiceDetails;

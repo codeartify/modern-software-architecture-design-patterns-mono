@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.hexagon.outside.repository.jpa;
+package com.workshop.architecture.fitness.hexagon.outside.driven.repository.jpa;
 
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.ForStoringMemberships;
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.Membership;

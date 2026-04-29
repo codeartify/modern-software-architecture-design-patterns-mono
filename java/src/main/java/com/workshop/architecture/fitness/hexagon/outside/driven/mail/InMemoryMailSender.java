@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.hexagon.outside.recipient.mail;
+package com.workshop.architecture.fitness.hexagon.outside.driven.mail;
 
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.CustomerActivateMembershipEmail;
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.ForSendingEmails;
