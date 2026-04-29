@@ -1,9 +1,6 @@
 package com.workshop.architecture.fitness.clean_architecture.use_case;
 
-import com.workshop.architecture.fitness.clean_architecture.entity.CustomerActivateMembershipEmail;
-import com.workshop.architecture.fitness.clean_architecture.entity.InvoiceDetails;
-import com.workshop.architecture.fitness.clean_architecture.entity.Membership;
-import com.workshop.architecture.fitness.clean_architecture.entity.MembershipBillingReference;
+import com.workshop.architecture.fitness.clean_architecture.entity.*;
 import com.workshop.architecture.fitness.clean_architecture.use_case.exception.CustomerTooYoungException;
 import com.workshop.architecture.fitness.clean_architecture.use_case.port.inbound.ActivateMembershipUseCase;
 import com.workshop.architecture.fitness.clean_architecture.use_case.port.inbound.ActivateMembershipInput;
@@ -13,10 +10,12 @@ import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.UUID;
+
+import static java.lang.Boolean.TRUE;
 
 @Service
 public class ActivateMembershipUseCaseInteractor implements ActivateMembershipUseCase {
@@ -53,27 +52,7 @@ public class ActivateMembershipUseCaseInteractor implements ActivateMembershipUs
         var planId = UUID.fromString(input.planId());
         var plan = forFindingPlans.findPlanById(planId);
 
-        var startDate = LocalDate.now();
-        var endDate = startDate.plusMonths(plan.durationInMonths());
-
-        if (Period.between(customer.dateOfBirth(), startDate).getYears() < 18
-                && !Boolean.TRUE.equals(input.signedByCustodian())) {
-            throw new CustomerTooYoungException(
-                    "Customers younger than 18 require signedByCustodian=true"
-            );
-        }
-
-        var membership = new Membership(
-                UUID.randomUUID(),
-                customerId,
-                planId,
-                plan.price().intValue(),
-                plan.durationInMonths(),
-                "ACTIVE",
-                null,
-                startDate,
-                endDate
-        );
+        var membership = createMembership(customer, customerId, planId, input.signedByCustodian(), LocalDate.now(), plan.durationInMonths(), plan.price());
 
         var storedMembership = forStoringMemberships.storeMembership(membership);
         var invoiceDetails = new InvoiceDetails(
@@ -117,6 +96,32 @@ public class ActivateMembershipUseCaseInteractor implements ActivateMembershipUs
                 storedBillingReference.externalInvoiceId(),
                 storedBillingReference.dueDate()
         );
+    }
+
+    private static Membership createMembership(Customer customer, UUID customerId, UUID planId, Boolean isSignedByCustodian, LocalDate startDate, int planDurationInMonths, BigDecimal planPrice) {
+        var endDate = startDate.plusMonths(planDurationInMonths);
+
+        if (!customer.isAdultAt(startDate) && isMissingSignature(isSignedByCustodian)) {
+            throw new CustomerTooYoungException(
+                    "Customers younger than 18 require signedByCustodian=true"
+            );
+        }
+
+        return new Membership(
+                UUID.randomUUID(),
+                customerId,
+                planId,
+                planPrice.intValue(),
+                planDurationInMonths,
+                "ACTIVE",
+                null,
+                startDate,
+                endDate
+        );
+    }
+
+    private static boolean isMissingSignature(Boolean isSignedByCustodian) {
+        return !TRUE.equals(isSignedByCustodian);
     }
 
 
