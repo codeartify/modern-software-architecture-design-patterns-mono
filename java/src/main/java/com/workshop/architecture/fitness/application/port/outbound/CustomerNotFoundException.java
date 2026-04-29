@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.infrastructure;
+package com.workshop.architecture.fitness.application.port.outbound;
 
 public class CustomerNotFoundException extends RuntimeException {
 

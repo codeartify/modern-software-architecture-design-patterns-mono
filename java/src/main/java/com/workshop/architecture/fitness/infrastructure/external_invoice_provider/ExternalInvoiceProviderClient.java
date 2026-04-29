@@ -1,7 +1,6 @@
 package com.workshop.architecture.fitness.infrastructure.external_invoice_provider;
 
 import com.workshop.architecture.fitness.infrastructure.MembershipEntity;
-import com.workshop.architecture.fitness.infrastructure.PlanEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -27,9 +26,9 @@ public class ExternalInvoiceProviderClient {
     public String createMembershipInvoice(
             String customerId,
             MembershipEntity membership,
-            PlanEntity plan,
             LocalDate invoiceDueDate,
-            String invoiceId
+            String invoiceId,
+            String planTitle
     ) {
         var request = new ExternalInvoiceProviderUpsertRequest(
                 customerId,
@@ -38,7 +37,7 @@ public class ExternalInvoiceProviderClient {
                 "CHF",
                 invoiceDueDate,
                 ExternalInvoiceProviderStatus.OPEN,
-                "Membership invoice for %s".formatted(plan.getTitle()),
+                "Membership invoice for %s".formatted(planTitle),
                 invoiceId,
                 Map.of(
                         "exercise", "membership",

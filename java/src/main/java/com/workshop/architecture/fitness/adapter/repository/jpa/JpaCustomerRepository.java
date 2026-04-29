@@ -1,9 +1,8 @@
 package com.workshop.architecture.fitness.adapter.repository.jpa;
 
-import com.workshop.architecture.fitness.application.ActivateMembershipInput;
 import com.workshop.architecture.fitness.application.port.outbound.ForFindingCustomers;
 import com.workshop.architecture.fitness.domain.Customer;
-import com.workshop.architecture.fitness.infrastructure.CustomerNotFoundException;
+import com.workshop.architecture.fitness.application.port.outbound.CustomerNotFoundException;
 import com.workshop.architecture.fitness.infrastructure.CustomerRepository;
 import org.springframework.stereotype.Component;
 
@@ -18,10 +17,10 @@ public class JpaCustomerRepository implements ForFindingCustomers {
         this.customerRepository = customerRepository;
     }
 
-    public Customer findCustomerByIdOrThrow(ActivateMembershipInput input) {
-        var customerEntity = customerRepository.findById(UUID.fromString(input.customerId()))
+    public Customer findCustomerById(UUID customerId) throws CustomerNotFoundException{
+        var customerEntity = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException(
-                        "Customer %s was not found".formatted(input.customerId())
+                        "Customer %s was not found".formatted(customerId.toString())
                 ));
 
         return new Customer(customerEntity.getDateOfBirth(), customerEntity.getEmailAddress());

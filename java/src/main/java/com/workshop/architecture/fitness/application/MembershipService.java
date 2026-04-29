@@ -2,6 +2,7 @@ package com.workshop.architecture.fitness.application;
 
 import com.workshop.architecture.fitness.application.port.inbound.ActivateMembership;
 import com.workshop.architecture.fitness.application.port.outbound.*;
+import com.workshop.architecture.fitness.domain.Plan;
 import com.workshop.architecture.fitness.infrastructure.*;
 import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderClient;
 import jakarta.transaction.Transactional;
@@ -65,15 +66,11 @@ public class MembershipService implements ActivateMembership {
     @Override
     public ActivateMembershipResult activateMembership(ActivateMembershipInput input) {
 
-        var customer = forFindingCustomers.findCustomerByIdOrThrow(input);
-
-        var plan = planRepository.findById(UUID.fromString(input.planId()))
-                .orElseThrow(() -> new PlanNotFoundException(
-                        "Plan %s was not found".formatted(input.planId())
-                ));
+        var customer = forFindingCustomers.findCustomerById(UUID.fromString(input.customerId()));
+        var plan = forFindingPlans.findPlanById(UUID.fromString(input.planId()));
 
         var startDate = LocalDate.now();
-        var endDate = startDate.plusMonths(plan.getDurationInMonths());
+        var endDate = startDate.plusMonths(plan.durationInMonths());
 
         if (Period.between(customer.dateOfBirth(), startDate).getYears() < 18
                 && !Boolean.TRUE.equals(input.signedByCustodian())) {
@@ -86,8 +83,8 @@ public class MembershipService implements ActivateMembership {
                 UUID.randomUUID(),
                 input.customerId(),
                 input.planId(),
-                plan.getPrice().intValue(),
-                plan.getDurationInMonths(),
+                plan.price().intValue(),
+                plan.durationInMonths(),
                 "ACTIVE",
                 null,
                 startDate,
@@ -100,9 +97,8 @@ public class MembershipService implements ActivateMembership {
         var externalInvoiceId = externalInvoiceProviderClient.createMembershipInvoice(
                 input.customerId(),
                 membership,
-                plan,
                 invoiceDueDate,
-                invoiceId
+                invoiceId, plan.title()
         );
         var now = Instant.now();
         var billingReference = billingReferenceRepository.save(new MembershipBillingReferenceEntity(
@@ -131,6 +127,14 @@ public class MembershipService implements ActivateMembership {
                 billingReference.getExternalInvoiceId(),
                 billingReference.getDueDate()
         );
+    }
+
+    private @NonNull Plan findPlanByIdOrThrow(ActivateMembershipInput input) {
+        var planEntity = planRepository.findById(UUID.fromString(input.planId()))
+                .orElseThrow(() -> new PlanNotFoundException(
+                        "Plan %s was not found".formatted(input.planId())
+                ));
+        return new Plan(planEntity.getPrice(), planEntity.getDurationInMonths(), planEntity.getTitle());
     }
 
 

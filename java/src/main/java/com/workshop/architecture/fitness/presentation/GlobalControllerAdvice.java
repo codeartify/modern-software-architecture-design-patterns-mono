@@ -1,9 +1,9 @@
 package com.workshop.architecture.fitness.presentation;
 
 import com.workshop.architecture.ApiErrorResponse;
-import com.workshop.architecture.fitness.infrastructure.CustomerNotFoundException;
+import com.workshop.architecture.fitness.application.port.outbound.CustomerNotFoundException;
 import com.workshop.architecture.fitness.application.CustomerTooYoungException;
-import com.workshop.architecture.fitness.infrastructure.PlanNotFoundException;
+import com.workshop.architecture.fitness.application.port.outbound.PlanNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
