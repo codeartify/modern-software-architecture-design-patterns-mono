@@ -127,9 +127,7 @@ public class MembershipService {
     }
 
     private void sendEmail(CustomerActivateMembershipEmail emailDetails) {
-
-
-        var email = emailDetails.emailTemplate().formatted(
+        var activationEmail = emailDetails.emailTemplate().formatted(
                         emailDetails.emailAddress(),
                         billingSenderEmailAddress,
                         emailDetails.invoiceId(),
@@ -141,9 +139,9 @@ public class MembershipService {
                 .replace("\n|", "\n")
                 .trim();
 
-        System.out.println(email);
+        System.out.println(activationEmail);
 
-        emailService.send(email);
+        emailService.send(activationEmail);
     }
 
 }
