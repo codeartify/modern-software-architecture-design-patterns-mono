@@ -3,20 +3,18 @@ package com.workshop.architecture.fitness.membership;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.workshop.architecture.fitness.email.InMemoryEmailService;
-import com.workshop.architecture.fitness.external_invoice_provider.ExternalInvoiceProviderStore;
+import com.workshop.architecture.fitness.infrastructure.InMemoryEmailService;
+import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderStore;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.workshop.architecture.fitness.membership.infrastructure.MembershipBillingReferenceEntity;
-import com.workshop.architecture.fitness.membership.infrastructure.MembershipBillingReferenceRepository;
-import com.workshop.architecture.fitness.membership.infrastructure.MembershipEntity;
-import com.workshop.architecture.fitness.membership.infrastructure.MembershipRepository;
-import com.workshop.architecture.fitness.membership.presentation.ActivateMembershipResponse;
-import com.workshop.architecture.fitness.membership.presentation.MembershipResponse;
+import com.workshop.architecture.fitness.infrastructure.MembershipBillingReferenceRepository;
+import com.workshop.architecture.fitness.infrastructure.MembershipEntity;
+import com.workshop.architecture.fitness.infrastructure.MembershipRepository;
+import com.workshop.architecture.fitness.presentation.ActivateMembershipResponse;
+import com.workshop.architecture.fitness.presentation.MembershipResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
