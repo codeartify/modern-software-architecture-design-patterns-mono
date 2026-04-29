@@ -25,9 +25,17 @@ from workshop_api.fitness.membership.models import (
 from workshop_api.fitness.membership.schemas import (
     ActivateMembershipRequest,
     ActivateMembershipResponse,
+    CancelMembershipRequest,
+    CancelMembershipResponse,
+    ExtendMembershipRequest,
+    ExtendMembershipResponse,
     MembershipResponse,
+    PauseMembershipRequest,
+    PauseMembershipResponse,
     PaymentReceivedRequest,
     PaymentReceivedResponse,
+    ResumeMembershipRequest,
+    ResumeMembershipResponse,
     SuspendOverdueMembershipsRequest,
     SuspendOverdueMembershipsResponse,
 )
@@ -48,6 +56,14 @@ def _response_content(response_model: PaymentReceivedResponse) -> dict[str, obje
     if hasattr(response_model, "model_dump"):
         return response_model.model_dump(by_alias=True, mode="json")
     return json.loads(response_model.json(by_alias=True))
+
+
+def _add_months(start_date: date, months: int) -> date:
+    total_month_index = start_date.month - 1 + months
+    end_year = start_date.year + (total_month_index // 12)
+    end_month = (total_month_index % 12) + 1
+    end_day = min(start_date.day, calendar.monthrange(end_year, end_month)[1])
+    return date(end_year, end_month, end_day)
 
 
 @router.get("", response_model=list[MembershipResponse], response_model_by_alias=True)
@@ -316,6 +332,323 @@ async def suspend_overdue_memberships(
 
 
 @router.post(
+    "/{membership_id}/pause",
+    response_model=PauseMembershipResponse,
+    response_model_by_alias=True,
+)
+async def pause_membership(
+    membership_id: uuid.UUID,
+    pause_request: PauseMembershipRequest,
+    session: Session = Depends(get_db_session),
+) -> PauseMembershipResponse:
+    if pause_request.pause_start_date is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="pauseStartDate is required",
+        )
+
+    if pause_request.pause_end_date is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="pauseEndDate is required",
+        )
+
+    if pause_request.pause_end_date < pause_request.pause_start_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="pauseEndDate must not be before pauseStartDate",
+        )
+
+    membership = session.get(MembershipOrmModel, str(membership_id))
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Membership {membership_id} was not found",
+        )
+
+    if membership.status != "ACTIVE":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only active memberships can be paused",
+        )
+
+    if membership.end_date < date.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Expired memberships cannot be paused",
+        )
+
+    previous_status = membership.status
+    previous_end_date = membership.end_date
+    pause_days = (pause_request.pause_end_date - pause_request.pause_start_date).days + 1
+
+    membership.status = "PAUSED"
+    membership.pause_start_date = pause_request.pause_start_date
+    membership.pause_end_date = pause_request.pause_end_date
+    membership.pause_reason = pause_request.reason
+    membership.end_date = membership.end_date + timedelta(days=pause_days)
+    session.add(membership)
+    session.commit()
+    session.refresh(membership)
+
+    return PauseMembershipResponse(
+        membershipId=membership.id,
+        previousStatus=previous_status,
+        newStatus=membership.status,
+        pauseStartDate=membership.pause_start_date,
+        pauseEndDate=membership.pause_end_date,
+        previousEndDate=previous_end_date,
+        newEndDate=membership.end_date,
+        reason=membership.pause_reason,
+        message="Membership paused",
+    )
+
+
+@router.post(
+    "/{membership_id}/resume",
+    response_model=ResumeMembershipResponse,
+    response_model_by_alias=True,
+)
+async def resume_membership(
+    membership_id: uuid.UUID,
+    resume_request: ResumeMembershipRequest | None = None,
+    session: Session = Depends(get_db_session),
+) -> ResumeMembershipResponse:
+    membership = session.get(MembershipOrmModel, str(membership_id))
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Membership {membership_id} was not found",
+        )
+
+    if membership.status != "PAUSED":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only paused memberships can be resumed",
+        )
+
+    if membership.end_date < date.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Expired memberships cannot be resumed",
+        )
+
+    resumed_at = (
+        resume_request.resumed_at
+        if resume_request is not None and resume_request.resumed_at is not None
+        else datetime.now(UTC)
+    )
+    reason = resume_request.reason if resume_request is not None else None
+    previous_status = membership.status
+    previous_pause_start_date = membership.pause_start_date
+    previous_pause_end_date = membership.pause_end_date
+
+    membership.status = "ACTIVE"
+    membership.pause_start_date = None
+    membership.pause_end_date = None
+    membership.pause_reason = None
+    session.add(membership)
+    session.commit()
+    session.refresh(membership)
+
+    return ResumeMembershipResponse(
+        membershipId=membership.id,
+        previousStatus=previous_status,
+        newStatus=membership.status,
+        resumedAt=resumed_at,
+        previousPauseStartDate=previous_pause_start_date,
+        previousPauseEndDate=previous_pause_end_date,
+        endDate=membership.end_date,
+        reason=reason,
+        message="Membership resumed",
+    )
+
+
+@router.post(
+    "/{membership_id}/cancel",
+    response_model=CancelMembershipResponse,
+    response_model_by_alias=True,
+)
+async def cancel_membership(
+    membership_id: uuid.UUID,
+    cancel_request: CancelMembershipRequest | None = None,
+    session: Session = Depends(get_db_session),
+) -> CancelMembershipResponse:
+    membership = session.get(MembershipOrmModel, str(membership_id))
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Membership {membership_id} was not found",
+        )
+
+    if membership.status == "CANCELLED":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Membership is already cancelled",
+        )
+
+    cancelled_at = (
+        cancel_request.cancelled_at
+        if cancel_request is not None and cancel_request.cancelled_at is not None
+        else datetime.now(UTC)
+    )
+    reason = cancel_request.reason if cancel_request is not None else None
+    previous_status = membership.status
+
+    membership.status = "CANCELLED"
+    membership.cancelled_at = cancelled_at
+    membership.cancellation_reason = reason
+    session.add(membership)
+    session.commit()
+    session.refresh(membership)
+
+    return CancelMembershipResponse(
+        membershipId=membership.id,
+        previousStatus=previous_status,
+        newStatus=membership.status,
+        cancelledAt=membership.cancelled_at,
+        reason=membership.cancellation_reason,
+        message="Membership cancelled",
+    )
+
+
+@router.post(
+    "/{membership_id}/extend",
+    response_model=ExtendMembershipResponse,
+    response_model_by_alias=True,
+)
+async def extend_membership(
+    membership_id: uuid.UUID,
+    extension_request: ExtendMembershipRequest,
+    request: Request,
+    session: Session = Depends(get_db_session),
+    external_invoice_provider_base_url: str = Depends(get_external_invoice_provider_base_url),
+) -> ExtendMembershipResponse:
+    membership = session.get(MembershipOrmModel, str(membership_id))
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Membership {membership_id} was not found",
+        )
+
+    if membership.status == "CANCELLED":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cancelled memberships cannot be extended",
+        )
+
+    if membership.end_date < date.today():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Expired memberships cannot be extended",
+        )
+
+    additional_months = extension_request.additional_months or 0
+    additional_days = extension_request.additional_days or 0
+    billable = extension_request.billable is True
+
+    if additional_months < 0 or additional_days < 0 or (
+        additional_months == 0 and additional_days == 0
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Extension duration must be positive",
+        )
+
+    if billable and (extension_request.price is None or extension_request.price <= 0):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Billable extensions require a positive price",
+        )
+
+    previous_end_date = membership.end_date
+    membership.end_date = _add_months(membership.end_date, additional_months) + timedelta(
+        days=additional_days
+    )
+    session.add(membership)
+    session.commit()
+    session.refresh(membership)
+
+    if not billable:
+        return ExtendMembershipResponse(
+            membershipId=membership.id,
+            status=membership.status,
+            previousEndDate=previous_end_date,
+            newEndDate=membership.end_date,
+            billable=False,
+            message="Membership extended",
+        )
+
+    invoice_id = str(uuid.uuid4())
+    invoice_due_date = date.today() + timedelta(days=30)
+    now = datetime.now(UTC)
+
+    external_invoice_request = ExternalInvoiceProviderUpsertRequest(
+        customerReference=membership.customer_id,
+        contractReference=membership.id,
+        amountInCents=extension_request.price,
+        currency="CHF",
+        dueDate=invoice_due_date,
+        status=ExternalInvoiceProviderStatus.OPEN,
+        description="Membership extension invoice",
+        externalCorrelationId=invoice_id,
+        metadata={
+            "exercise": "membership",
+            "membershipId": membership.id,
+            "extension": "true",
+        },
+    )
+
+    client_kwargs: dict[str, object] = {"base_url": external_invoice_provider_base_url}
+    if external_invoice_provider_base_url.startswith("http://testserver"):
+        client_kwargs["transport"] = httpx.ASGITransport(app=request.app)
+
+    async with httpx.AsyncClient(**client_kwargs) as client:
+        external_invoice_http_response = await client.post(
+            "/api/shared/external-invoice-provider/invoices",
+            json=json.loads(
+                external_invoice_request.model_dump_json(by_alias=True)
+                if hasattr(external_invoice_request, "model_dump_json")
+                else external_invoice_request.json(by_alias=True)
+            ),
+        )
+        external_invoice_http_response.raise_for_status()
+        external_invoice = (
+            ExternalInvoiceProviderResponse.model_validate(external_invoice_http_response.json())
+            if hasattr(ExternalInvoiceProviderResponse, "model_validate")
+            else ExternalInvoiceProviderResponse.parse_obj(external_invoice_http_response.json())
+        )
+
+    external_invoice_id = (
+        external_invoice.invoice_id if external_invoice is not None else invoice_id
+    )
+    billing_reference = MembershipBillingReferenceOrmModel(
+        membership_id=membership.id,
+        external_invoice_id=external_invoice_id,
+        external_invoice_reference=invoice_id,
+        due_date=invoice_due_date,
+        status="OPEN",
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(billing_reference)
+    session.commit()
+
+    return ExtendMembershipResponse(
+        membershipId=membership.id,
+        status=membership.status,
+        previousEndDate=previous_end_date,
+        newEndDate=membership.end_date,
+        billable=True,
+        billingReferenceId=billing_reference.id,
+        externalInvoiceReference=billing_reference.external_invoice_reference,
+        externalInvoiceId=billing_reference.external_invoice_id,
+        invoiceDueDate=billing_reference.due_date,
+        message="Membership extended and invoice created",
+    )
+
+
+@router.post(
     "/payment-received",
     response_model=PaymentReceivedResponse,
     response_model_by_alias=True,
@@ -394,7 +727,9 @@ async def payment_received(
     new_membership_status = membership.status
     reactivated = False
 
-    if membership.status == "SUSPENDED" and membership.reason == "NON_PAYMENT":
+    if membership.status == "CANCELLED":
+        message = "Payment recorded; membership is cancelled and remains unchanged"
+    elif membership.status == "SUSPENDED" and membership.reason == "NON_PAYMENT":
         if paid_at.date() <= membership.end_date:
             membership.status = "ACTIVE"
             membership.reason = None

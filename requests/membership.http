@@ -32,6 +32,61 @@ Accept: application/json
   "checkedAt": "2026-06-27T10:00:00Z"
 }
 
+### Pause membership
+POST {{baseUrl}}/api/memberships/{{membershipId}}/pause
+Content-Type: application/json
+Accept: application/json
+
+{
+  "pauseStartDate": "2026-07-01",
+  "pauseEndDate": "2026-07-14",
+  "reason": "Vacation"
+}
+
+### Resume paused membership
+POST {{baseUrl}}/api/memberships/{{seededPausedMembershipId}}/resume
+Content-Type: application/json
+Accept: application/json
+
+{
+  "resumedAt": "2026-07-15T10:00:00Z",
+  "reason": "Back from vacation"
+}
+
+### Cancel membership
+POST {{baseUrl}}/api/memberships/{{membershipId}}/cancel
+Content-Type: application/json
+Accept: application/json
+
+{
+  "cancelledAt": "2026-07-15T10:00:00Z",
+  "reason": "Customer requested cancellation"
+}
+
+### Extend membership without billing
+POST {{baseUrl}}/api/memberships/{{membershipId}}/extend
+Content-Type: application/json
+Accept: application/json
+
+{
+  "additionalMonths": 1,
+  "additionalDays": 5,
+  "billable": false,
+  "reason": "Goodwill extension"
+}
+
+### Extend membership with billing
+POST {{baseUrl}}/api/memberships/{{membershipId}}/extend
+Content-Type: application/json
+Accept: application/json
+
+{
+  "additionalDays": 10,
+  "billable": true,
+  "price": 250,
+  "reason": "Billable extension"
+}
+
 ### Record payment callback by external invoice id
 POST {{baseUrl}}/api/memberships/payment-received
 Content-Type: application/json

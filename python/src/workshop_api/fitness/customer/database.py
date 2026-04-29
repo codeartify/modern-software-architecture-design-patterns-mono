@@ -169,6 +169,22 @@ def seed_demo_data() -> None:
                 reason=None,
                 start_date=date(2026, 1, 1),
                 end_date=date(2026, 12, 31),
+                cancelled_at=updated_paid_at,
+                cancellation_reason="Seed cancellation",
+            ),
+            MembershipOrmModel(
+                id="b7000000-0000-0000-0000-000000000006",
+                customer_id="33333333-3333-3333-3333-333333333333",
+                plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+                plan_price=999,
+                plan_duration=12,
+                status="PAUSED",
+                reason=None,
+                start_date=date(2026, 1, 1),
+                end_date=date(2027, 1, 14),
+                pause_start_date=date(2026, 6, 1),
+                pause_end_date=date(2026, 6, 14),
+                pause_reason="Seed pause",
             ),
         ]:
             session.merge(membership)
@@ -224,6 +240,16 @@ def seed_demo_data() -> None:
                 created_at=seeded_at,
                 updated_at=seeded_at,
             ),
+            MembershipBillingReferenceOrmModel(
+                id="c7000000-0000-0000-0000-000000000006",
+                membership_id="b7000000-0000-0000-0000-000000000006",
+                external_invoice_id="seed-external-paused",
+                external_invoice_reference="seed-local-paused",
+                due_date=date(2026, 7, 1),
+                status="OPEN",
+                created_at=seeded_at,
+                updated_at=seeded_at,
+            ),
         ]:
             session.merge(billing_reference)
 
@@ -245,6 +271,19 @@ def ensure_workshop_schema() -> None:
         if "reason" not in membership_columns:
             with engine.begin() as connection:
                 connection.execute(text("ALTER TABLE memberships ADD COLUMN reason VARCHAR(100)"))
+        missing_membership_columns = {
+            "pause_start_date": "DATE",
+            "pause_end_date": "DATE",
+            "pause_reason": "VARCHAR(100)",
+            "cancelled_at": "TIMESTAMP",
+            "cancellation_reason": "VARCHAR(100)",
+        }
+        for column_name, column_type in missing_membership_columns.items():
+            if column_name not in membership_columns:
+                with engine.begin() as connection:
+                    connection.execute(
+                        text(f"ALTER TABLE memberships ADD COLUMN {column_name} {column_type}")
+                    )
 
 
 def init_db() -> None:

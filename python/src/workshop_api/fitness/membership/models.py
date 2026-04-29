@@ -20,6 +20,11 @@ class MembershipOrmModel(Base):
     reason = Column(String(100), nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
+    pause_start_date = Column(Date, nullable=True)
+    pause_end_date = Column(Date, nullable=True)
+    pause_reason = Column(String(100), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    cancellation_reason = Column(String(100), nullable=True)
 
 
 class MembershipBillingReferenceOrmModel(Base):

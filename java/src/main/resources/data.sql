@@ -11,7 +11,20 @@ MERGE INTO plans (id, title, description, duration_in_months, price) KEY (id) VA
     ('aaaaaa24-aaaa-aaaa-aaaa-aaaaaaaaaa24', 'Elite 24 Months', 'Twenty-four-month plan for long-term training', 24, 1699.00);
 
 MERGE INTO memberships (
-    id, customer_id, plan_id, plan_price, plan_duration, status, reason, start_date, end_date
+    id,
+    customer_id,
+    plan_id,
+    plan_price,
+    plan_duration,
+    status,
+    reason,
+    start_date,
+    end_date,
+    pause_start_date,
+    pause_end_date,
+    pause_reason,
+    cancelled_at,
+    cancellation_reason
 ) KEY (id) VALUES
     (
         'b7000000-0000-0000-0000-000000000001',
@@ -22,7 +35,12 @@ MERGE INTO memberships (
         'ACTIVE',
         NULL,
         DATE '2026-01-01',
-        DATE '2026-12-31'
+        DATE '2026-12-31',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         'b7000000-0000-0000-0000-000000000002',
@@ -33,7 +51,12 @@ MERGE INTO memberships (
         'ACTIVE',
         NULL,
         DATE '2026-01-01',
-        DATE '2026-12-31'
+        DATE '2026-12-31',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         'b7000000-0000-0000-0000-000000000003',
@@ -44,7 +67,12 @@ MERGE INTO memberships (
         'ACTIVE',
         NULL,
         DATE '2026-01-01',
-        DATE '2026-12-31'
+        DATE '2026-12-31',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         'b7000000-0000-0000-0000-000000000004',
@@ -55,7 +83,12 @@ MERGE INTO memberships (
         'SUSPENDED',
         'NON_PAYMENT',
         DATE '2026-01-01',
-        DATE '2026-12-31'
+        DATE '2026-12-31',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     ),
     (
         'b7000000-0000-0000-0000-000000000005',
@@ -66,7 +99,28 @@ MERGE INTO memberships (
         'CANCELLED',
         NULL,
         DATE '2026-01-01',
-        DATE '2026-12-31'
+        DATE '2026-12-31',
+        NULL,
+        NULL,
+        NULL,
+        TIMESTAMP WITH TIME ZONE '2026-02-01 10:00:00+00:00',
+        'Seed cancellation'
+    ),
+    (
+        'b7000000-0000-0000-0000-000000000006',
+        '33333333-3333-3333-3333-333333333333',
+        'aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12',
+        999,
+        12,
+        'PAUSED',
+        NULL,
+        DATE '2026-01-01',
+        DATE '2027-01-14',
+        DATE '2026-06-01',
+        DATE '2026-06-14',
+        'Seed pause',
+        NULL,
+        NULL
     );
 
 MERGE INTO membership_billing_references (
@@ -125,6 +179,16 @@ MERGE INTO membership_billing_references (
         'seed-external-cancelled',
         'seed-local-cancelled',
         DATE '2026-05-01',
+        'OPEN',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00',
+        TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00'
+    ),
+    (
+        'c7000000-0000-0000-0000-000000000006',
+        'b7000000-0000-0000-0000-000000000006',
+        'seed-external-paused',
+        'seed-local-paused',
+        DATE '2026-07-01',
         'OPEN',
         TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00',
         TIMESTAMP WITH TIME ZONE '2026-01-01 10:00:00+00:00'

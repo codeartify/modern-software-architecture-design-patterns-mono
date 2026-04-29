@@ -110,3 +110,120 @@ class PaymentReceivedResponse(BaseModel):
     )
     reactivated: bool
     message: str
+
+
+class PauseMembershipRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    pause_start_date: date | None = Field(default=None, alias="pauseStartDate")
+    pause_end_date: date | None = Field(default=None, alias="pauseEndDate")
+    reason: str | None = None
+
+
+class PauseMembershipResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    membership_id: str = Field(alias="membershipId", serialization_alias="membershipId")
+    previous_status: str = Field(alias="previousStatus", serialization_alias="previousStatus")
+    new_status: str = Field(alias="newStatus", serialization_alias="newStatus")
+    pause_start_date: date = Field(
+        alias="pauseStartDate",
+        serialization_alias="pauseStartDate",
+    )
+    pause_end_date: date = Field(alias="pauseEndDate", serialization_alias="pauseEndDate")
+    previous_end_date: date = Field(
+        alias="previousEndDate",
+        serialization_alias="previousEndDate",
+    )
+    new_end_date: date = Field(alias="newEndDate", serialization_alias="newEndDate")
+    reason: str | None = None
+    message: str
+
+
+class ResumeMembershipRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    resumed_at: datetime | None = Field(default=None, alias="resumedAt")
+    reason: str | None = None
+
+
+class ResumeMembershipResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    membership_id: str = Field(alias="membershipId", serialization_alias="membershipId")
+    previous_status: str = Field(alias="previousStatus", serialization_alias="previousStatus")
+    new_status: str = Field(alias="newStatus", serialization_alias="newStatus")
+    resumed_at: datetime = Field(alias="resumedAt", serialization_alias="resumedAt")
+    previous_pause_start_date: date | None = Field(
+        alias="previousPauseStartDate",
+        serialization_alias="previousPauseStartDate",
+    )
+    previous_pause_end_date: date | None = Field(
+        alias="previousPauseEndDate",
+        serialization_alias="previousPauseEndDate",
+    )
+    end_date: date = Field(alias="endDate", serialization_alias="endDate")
+    reason: str | None = None
+    message: str
+
+
+class CancelMembershipRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    cancelled_at: datetime | None = Field(default=None, alias="cancelledAt")
+    reason: str | None = None
+
+
+class CancelMembershipResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    membership_id: str = Field(alias="membershipId", serialization_alias="membershipId")
+    previous_status: str = Field(alias="previousStatus", serialization_alias="previousStatus")
+    new_status: str = Field(alias="newStatus", serialization_alias="newStatus")
+    cancelled_at: datetime = Field(alias="cancelledAt", serialization_alias="cancelledAt")
+    reason: str | None = None
+    message: str
+
+
+class ExtendMembershipRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    additional_months: int | None = Field(default=None, alias="additionalMonths")
+    additional_days: int | None = Field(default=None, alias="additionalDays")
+    billable: bool | None = None
+    price: int | None = None
+    reason: str | None = None
+
+
+class ExtendMembershipResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    membership_id: str = Field(alias="membershipId", serialization_alias="membershipId")
+    status: str
+    previous_end_date: date = Field(
+        alias="previousEndDate",
+        serialization_alias="previousEndDate",
+    )
+    new_end_date: date = Field(alias="newEndDate", serialization_alias="newEndDate")
+    billable: bool
+    billing_reference_id: str | None = Field(
+        default=None,
+        alias="billingReferenceId",
+        serialization_alias="billingReferenceId",
+    )
+    external_invoice_reference: str | None = Field(
+        default=None,
+        alias="externalInvoiceReference",
+        serialization_alias="externalInvoiceReference",
+    )
+    external_invoice_id: str | None = Field(
+        default=None,
+        alias="externalInvoiceId",
+        serialization_alias="externalInvoiceId",
+    )
+    invoice_due_date: date | None = Field(
+        default=None,
+        alias="invoiceDueDate",
+        serialization_alias="invoiceDueDate",
+    )
+    message: str

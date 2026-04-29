@@ -42,8 +42,8 @@ def test_seed_demo_data_populates_expected_workshop_records(tmp_path: Path, monk
     session = test_sessionmaker()
     assert session.query(CustomerOrmModel).count() == 4
     assert session.query(PlanOrmModel).count() == 4
-    assert session.query(MembershipOrmModel).count() == 5
-    assert session.query(MembershipBillingReferenceOrmModel).count() == 5
+    assert session.query(MembershipOrmModel).count() == 6
+    assert session.query(MembershipBillingReferenceOrmModel).count() == 6
 
     seeded_plan = session.get(PlanOrmModel, "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12")
     assert seeded_plan is not None
@@ -64,4 +64,11 @@ def test_seed_demo_data_populates_expected_workshop_records(tmp_path: Path, monk
     assert seeded_billing_reference.external_invoice_id == "seed-external-open-overdue"
     assert seeded_billing_reference.external_invoice_reference == "seed-local-open-overdue"
     assert seeded_billing_reference.status == "OPEN"
+
+    seeded_paused_membership = session.get(
+        MembershipOrmModel, "b7000000-0000-0000-0000-000000000006"
+    )
+    assert seeded_paused_membership is not None
+    assert seeded_paused_membership.status == "PAUSED"
+    assert seeded_paused_membership.pause_reason == "Seed pause"
     session.close()

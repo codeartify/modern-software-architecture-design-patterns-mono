@@ -4,7 +4,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Entity
@@ -37,6 +39,21 @@ public class MembershipEntity {
 
     @Column(nullable = false)
     private LocalDate endDate;
+
+    @Column
+    private LocalDate pauseStartDate;
+
+    @Column
+    private LocalDate pauseEndDate;
+
+    @Column
+    private String pauseReason;
+
+    @Column
+    private Instant cancelledAt;
+
+    @Column
+    private String cancellationReason;
 
     protected MembershipEntity() {
     }
@@ -99,8 +116,32 @@ public class MembershipEntity {
         return endDate;
     }
 
+    public LocalDate getPauseStartDate() {
+        return pauseStartDate;
+    }
+
+    public LocalDate getPauseEndDate() {
+        return pauseEndDate;
+    }
+
+    public String getPauseReason() {
+        return pauseReason;
+    }
+
+    public Instant getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
     public boolean isActive() {
         return "ACTIVE".equals(status);
+    }
+
+    public boolean isPaused() {
+        return "PAUSED".equals(status);
     }
 
     public boolean isSuspended() {
@@ -111,6 +152,7 @@ public class MembershipEntity {
         return isSuspended() && "NON_PAYMENT".equals(reason);
     }
 
+    // Is this domain or data access?
     public boolean isCancelled() {
         return "CANCELLED".equals(status);
     }
@@ -127,5 +169,31 @@ public class MembershipEntity {
     public void reactivateAfterPayment() {
         this.status = "ACTIVE";
         this.reason = null;
+    }
+
+    public void pause(LocalDate pauseStartDate, LocalDate pauseEndDate, String reason) {
+        long pauseDays = ChronoUnit.DAYS.between(pauseStartDate, pauseEndDate) + 1;
+        this.status = "PAUSED";
+        this.pauseStartDate = pauseStartDate;
+        this.pauseEndDate = pauseEndDate;
+        this.pauseReason = reason;
+        this.endDate = this.endDate.plusDays(pauseDays);
+    }
+
+    public void resumeAfterPause() {
+        this.status = "ACTIVE";
+        this.pauseStartDate = null;
+        this.pauseEndDate = null;
+        this.pauseReason = null;
+    }
+
+    public void cancel(Instant cancelledAt, String reason) {
+        this.status = "CANCELLED";
+        this.cancelledAt = cancelledAt;
+        this.cancellationReason = reason;
+    }
+
+    public void extendBy(int additionalMonths, int additionalDays) {
+        this.endDate = this.endDate.plusMonths(additionalMonths).plusDays(additionalDays);
     }
 }

@@ -254,7 +254,8 @@ class PaymentReceivedControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.newMembershipStatus").value("CANCELLED"))
-                .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
+                .andExpect(jsonPath("$.message")
+                        .value("Payment recorded; membership is cancelled and remains unchanged"));
     }
 
     @Test
