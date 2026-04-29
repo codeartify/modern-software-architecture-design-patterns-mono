@@ -1,8 +1,8 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record E00ActivateMembershipRequest(
+public record ActivateMembershipRequest(
         @NotBlank String customerId,
         @NotBlank String planId,
         Boolean signedByCustodian

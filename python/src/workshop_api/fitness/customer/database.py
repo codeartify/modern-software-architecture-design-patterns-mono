@@ -44,9 +44,9 @@ def get_db_session() -> Generator[Session]:
 
 def seed_demo_data() -> None:
     from workshop_api.fitness.customer.models import CustomerOrmModel
-    from workshop_api.fitness.membership.exercise00_mixed.models import (
-        E00MembershipBillingReferenceOrmModel,
-        E00MembershipOrmModel,
+    from workshop_api.fitness.membership.models import (
+        MembershipBillingReferenceOrmModel,
+        MembershipOrmModel,
     )
     from workshop_api.fitness.plan.models import PlanOrmModel
 
@@ -115,7 +115,7 @@ def seed_demo_data() -> None:
             session.merge(plan)
 
         for membership in [
-            E00MembershipOrmModel(
+            MembershipOrmModel(
                 id="b7000000-0000-0000-0000-000000000001",
                 customer_id="11111111-1111-1111-1111-111111111111",
                 plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -126,7 +126,7 @@ def seed_demo_data() -> None:
                 start_date=date(2026, 1, 1),
                 end_date=date(2026, 12, 31),
             ),
-            E00MembershipOrmModel(
+            MembershipOrmModel(
                 id="b7000000-0000-0000-0000-000000000002",
                 customer_id="22222222-2222-2222-2222-222222222222",
                 plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -137,7 +137,7 @@ def seed_demo_data() -> None:
                 start_date=date(2026, 1, 1),
                 end_date=date(2026, 12, 31),
             ),
-            E00MembershipOrmModel(
+            MembershipOrmModel(
                 id="b7000000-0000-0000-0000-000000000003",
                 customer_id="33333333-3333-3333-3333-333333333333",
                 plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -148,7 +148,7 @@ def seed_demo_data() -> None:
                 start_date=date(2026, 1, 1),
                 end_date=date(2026, 12, 31),
             ),
-            E00MembershipOrmModel(
+            MembershipOrmModel(
                 id="b7000000-0000-0000-0000-000000000004",
                 customer_id="11111111-1111-1111-1111-111111111111",
                 plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -159,7 +159,7 @@ def seed_demo_data() -> None:
                 start_date=date(2026, 1, 1),
                 end_date=date(2026, 12, 31),
             ),
-            E00MembershipOrmModel(
+            MembershipOrmModel(
                 id="b7000000-0000-0000-0000-000000000005",
                 customer_id="22222222-2222-2222-2222-222222222222",
                 plan_id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -174,7 +174,7 @@ def seed_demo_data() -> None:
             session.merge(membership)
 
         for billing_reference in [
-            E00MembershipBillingReferenceOrmModel(
+            MembershipBillingReferenceOrmModel(
                 id="c7000000-0000-0000-0000-000000000001",
                 membership_id="b7000000-0000-0000-0000-000000000001",
                 external_invoice_id="seed-external-open-overdue",
@@ -184,7 +184,7 @@ def seed_demo_data() -> None:
                 created_at=seeded_at,
                 updated_at=seeded_at,
             ),
-            E00MembershipBillingReferenceOrmModel(
+            MembershipBillingReferenceOrmModel(
                 id="c7000000-0000-0000-0000-000000000002",
                 membership_id="b7000000-0000-0000-0000-000000000002",
                 external_invoice_id="seed-external-open-current",
@@ -194,7 +194,7 @@ def seed_demo_data() -> None:
                 created_at=seeded_at,
                 updated_at=seeded_at,
             ),
-            E00MembershipBillingReferenceOrmModel(
+            MembershipBillingReferenceOrmModel(
                 id="c7000000-0000-0000-0000-000000000003",
                 membership_id="b7000000-0000-0000-0000-000000000003",
                 external_invoice_id="seed-external-paid",
@@ -204,7 +204,7 @@ def seed_demo_data() -> None:
                 created_at=seeded_at,
                 updated_at=updated_paid_at,
             ),
-            E00MembershipBillingReferenceOrmModel(
+            MembershipBillingReferenceOrmModel(
                 id="c7000000-0000-0000-0000-000000000004",
                 membership_id="b7000000-0000-0000-0000-000000000004",
                 external_invoice_id="seed-external-suspended",
@@ -214,7 +214,7 @@ def seed_demo_data() -> None:
                 created_at=seeded_at,
                 updated_at=seeded_at,
             ),
-            E00MembershipBillingReferenceOrmModel(
+            MembershipBillingReferenceOrmModel(
                 id="c7000000-0000-0000-0000-000000000005",
                 membership_id="b7000000-0000-0000-0000-000000000005",
                 external_invoice_id="seed-external-cancelled",
@@ -249,9 +249,9 @@ def ensure_workshop_schema() -> None:
 
 def init_db() -> None:
     from workshop_api.fitness.customer.models import CustomerOrmModel
-    from workshop_api.fitness.membership.exercise00_mixed.models import (
-        E00MembershipBillingReferenceOrmModel,
-        E00MembershipOrmModel,
+    from workshop_api.fitness.membership.models import (
+        MembershipBillingReferenceOrmModel,
+        MembershipOrmModel,
     )
     from workshop_api.fitness.plan.models import PlanOrmModel
 
@@ -261,8 +261,8 @@ def init_db() -> None:
             tables=[
                 CustomerOrmModel.__table__,
                 PlanOrmModel.__table__,
-                E00MembershipOrmModel.__table__,
-                E00MembershipBillingReferenceOrmModel.__table__,
+                MembershipOrmModel.__table__,
+                MembershipBillingReferenceOrmModel.__table__,
             ],
         )
         ensure_workshop_schema()

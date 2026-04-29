@@ -7,9 +7,9 @@ from sqlalchemy.orm import sessionmaker
 from workshop_api.fitness.customer import database
 from workshop_api.fitness.customer.database import Base
 from workshop_api.fitness.customer.models import CustomerOrmModel
-from workshop_api.fitness.membership.exercise00_mixed.models import (
-    E00MembershipBillingReferenceOrmModel,
-    E00MembershipOrmModel,
+from workshop_api.fitness.membership.models import (
+    MembershipBillingReferenceOrmModel,
+    MembershipOrmModel,
 )
 from workshop_api.fitness.plan.models import PlanOrmModel
 
@@ -30,8 +30,8 @@ def test_seed_demo_data_populates_expected_workshop_records(tmp_path: Path, monk
         tables=[
             CustomerOrmModel.__table__,
             PlanOrmModel.__table__,
-            E00MembershipOrmModel.__table__,
-            E00MembershipBillingReferenceOrmModel.__table__,
+            MembershipOrmModel.__table__,
+            MembershipBillingReferenceOrmModel.__table__,
         ],
     )
     monkeypatch.setattr(database, "SessionLocal", test_sessionmaker)
@@ -42,8 +42,8 @@ def test_seed_demo_data_populates_expected_workshop_records(tmp_path: Path, monk
     session = test_sessionmaker()
     assert session.query(CustomerOrmModel).count() == 4
     assert session.query(PlanOrmModel).count() == 4
-    assert session.query(E00MembershipOrmModel).count() == 5
-    assert session.query(E00MembershipBillingReferenceOrmModel).count() == 5
+    assert session.query(MembershipOrmModel).count() == 5
+    assert session.query(MembershipBillingReferenceOrmModel).count() == 5
 
     seeded_plan = session.get(PlanOrmModel, "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12")
     assert seeded_plan is not None
@@ -51,14 +51,14 @@ def test_seed_demo_data_populates_expected_workshop_records(tmp_path: Path, monk
     assert Decimal(str(seeded_plan.price)) == Decimal("999.00")
 
     seeded_membership = session.get(
-        E00MembershipOrmModel, "b7000000-0000-0000-0000-000000000004"
+        MembershipOrmModel, "b7000000-0000-0000-0000-000000000004"
     )
     assert seeded_membership is not None
     assert seeded_membership.status == "SUSPENDED"
     assert seeded_membership.reason == "NON_PAYMENT"
 
     seeded_billing_reference = session.get(
-        E00MembershipBillingReferenceOrmModel, "c7000000-0000-0000-0000-000000000001"
+        MembershipBillingReferenceOrmModel, "c7000000-0000-0000-0000-000000000001"
     )
     assert seeded_billing_reference is not None
     assert seeded_billing_reference.external_invoice_id == "seed-external-open-overdue"

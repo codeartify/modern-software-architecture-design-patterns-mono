@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class E00ActivateMembershipRequest(BaseModel):
+class ActivateMembershipRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     customer_id: UUID = Field(alias="customerId")
@@ -12,7 +12,7 @@ class E00ActivateMembershipRequest(BaseModel):
     signed_by_custodian: bool | None = Field(default=None, alias="signedByCustodian")
 
 
-class E00ActivateMembershipResponse(BaseModel):
+class ActivateMembershipResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     membership_id: UUID = Field(alias="membershipId", serialization_alias="membershipId")
@@ -32,7 +32,7 @@ class E00ActivateMembershipResponse(BaseModel):
     invoice_due_date: date = Field(alias="invoiceDueDate", serialization_alias="invoiceDueDate")
 
 
-class E00MembershipResponse(BaseModel):
+class MembershipResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     membership_id: UUID = Field(alias="membershipId", serialization_alias="membershipId")
@@ -46,13 +46,13 @@ class E00MembershipResponse(BaseModel):
     end_date: date = Field(alias="endDate", serialization_alias="endDate")
 
 
-class E00SuspendOverdueMembershipsRequest(BaseModel):
+class SuspendOverdueMembershipsRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     checked_at: datetime | None = Field(default=None, alias="checkedAt")
 
 
-class E00SuspendOverdueMembershipsResponse(BaseModel):
+class SuspendOverdueMembershipsResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     checked_at: datetime = Field(alias="checkedAt", serialization_alias="checkedAt")
@@ -66,7 +66,7 @@ class E00SuspendOverdueMembershipsResponse(BaseModel):
     )
 
 
-class E00PaymentReceivedRequest(BaseModel):
+class PaymentReceivedRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     external_invoice_id: str | None = Field(
@@ -91,7 +91,7 @@ class E00PaymentReceivedRequest(BaseModel):
     )
 
 
-class E00PaymentReceivedResponse(BaseModel):
+class PaymentReceivedResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     paid_at: datetime = Field(alias="paidAt", serialization_alias="paidAt")

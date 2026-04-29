@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -19,11 +19,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
-class E00PaymentReceivedControllerTest {
+class PaymentReceivedControllerTest {
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> "jdbc:h2:mem:e00-payment-received-test;DB_CLOSE_DELAY=-1");
+        registry.add("spring.datasource.url", () -> "jdbc:h2:mem:membership-payment-received-test;DB_CLOSE_DELAY=-1");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
     }
 
@@ -31,10 +31,10 @@ class E00PaymentReceivedControllerTest {
     private WebApplicationContext webApplicationContext;
 
     @Autowired
-    private E00MembershipRepository membershipRepository;
+    private MembershipRepository membershipRepository;
 
     @Autowired
-    private E00MembershipBillingReferenceRepository billingReferenceRepository;
+    private MembershipBillingReferenceRepository billingReferenceRepository;
 
     private MockMvc mockMvc;
 
@@ -48,7 +48,7 @@ class E00PaymentReceivedControllerTest {
     @Test
     void paidCallbackForActiveMembershipMarksBillingReferencePaidWithoutChangingMembership() throws Exception {
         UUID membershipId = UUID.randomUUID();
-        E00MembershipEntity membership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity membership = membershipRepository.save(new MembershipEntity(
                 membershipId,
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -59,8 +59,8 @@ class E00PaymentReceivedControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        E00MembershipBillingReferenceEntity billingReference = billingReferenceRepository.save(
-                new E00MembershipBillingReferenceEntity(
+        MembershipBillingReferenceEntity billingReference = billingReferenceRepository.save(
+                new MembershipBillingReferenceEntity(
                         UUID.randomUUID(),
                         membershipId,
                         "external-001",
@@ -72,7 +72,7 @@ class E00PaymentReceivedControllerTest {
                 )
         );
 
-        mockMvc.perform(post("/api/e00/memberships/payment-received")
+        mockMvc.perform(post("/api/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -88,10 +88,10 @@ class E00PaymentReceivedControllerTest {
                 .andExpect(jsonPath("$.reactivated").value(false))
                 .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
 
-        E00MembershipBillingReferenceEntity updatedBillingReference = billingReferenceRepository.findById(
+        MembershipBillingReferenceEntity updatedBillingReference = billingReferenceRepository.findById(
                 billingReference.getId()
         ).orElseThrow();
-        E00MembershipEntity updatedMembership = membershipRepository.findById(membership.getId()).orElseThrow();
+        MembershipEntity updatedMembership = membershipRepository.findById(membership.getId()).orElseThrow();
 
         org.assertj.core.api.Assertions.assertThat(updatedBillingReference.getStatus()).isEqualTo("PAID");
         org.assertj.core.api.Assertions.assertThat(updatedMembership.getStatus()).isEqualTo("ACTIVE");
@@ -100,7 +100,7 @@ class E00PaymentReceivedControllerTest {
     @Test
     void paidCallbackReactivatesMembershipSuspendedForNonPaymentWithinMembershipPeriod() throws Exception {
         UUID membershipId = UUID.randomUUID();
-        E00MembershipEntity membership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity membership = membershipRepository.save(new MembershipEntity(
                 membershipId,
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -111,7 +111,7 @@ class E00PaymentReceivedControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 membershipId,
                 "external-002",
@@ -122,7 +122,7 @@ class E00PaymentReceivedControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
 
-        mockMvc.perform(post("/api/e00/memberships/payment-received")
+        mockMvc.perform(post("/api/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -136,7 +136,7 @@ class E00PaymentReceivedControllerTest {
                 .andExpect(jsonPath("$.reactivated").value(true))
                 .andExpect(jsonPath("$.message").value("Payment recorded; membership reactivated"));
 
-        E00MembershipEntity updatedMembership = membershipRepository.findById(membership.getId()).orElseThrow();
+        MembershipEntity updatedMembership = membershipRepository.findById(membership.getId()).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(updatedMembership.getStatus()).isEqualTo("ACTIVE");
         org.assertj.core.api.Assertions.assertThat(updatedMembership.getReason()).isNull();
     }
@@ -144,7 +144,7 @@ class E00PaymentReceivedControllerTest {
     @Test
     void paidCallbackKeepsMembershipSuspendedWhenMembershipPeriodAlreadyEnded() throws Exception {
         UUID membershipId = UUID.randomUUID();
-        membershipRepository.save(new E00MembershipEntity(
+        membershipRepository.save(new MembershipEntity(
                 membershipId,
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -155,7 +155,7 @@ class E00PaymentReceivedControllerTest {
                 LocalDate.parse("2025-01-01"),
                 LocalDate.parse("2025-12-31")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 membershipId,
                 "external-003",
@@ -166,7 +166,7 @@ class E00PaymentReceivedControllerTest {
                 Instant.parse("2025-01-01T10:00:00Z")
         ));
 
-        mockMvc.perform(post("/api/e00/memberships/payment-received")
+        mockMvc.perform(post("/api/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -183,7 +183,7 @@ class E00PaymentReceivedControllerTest {
     @Test
     void paidCallbackKeepsMembershipSuspendedWhenSuspendedForAnotherReason() throws Exception {
         UUID membershipId = UUID.randomUUID();
-        membershipRepository.save(new E00MembershipEntity(
+        membershipRepository.save(new MembershipEntity(
                 membershipId,
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -194,7 +194,7 @@ class E00PaymentReceivedControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 membershipId,
                 "external-004",
@@ -205,7 +205,7 @@ class E00PaymentReceivedControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
 
-        mockMvc.perform(post("/api/e00/memberships/payment-received")
+        mockMvc.perform(post("/api/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -222,7 +222,7 @@ class E00PaymentReceivedControllerTest {
     @Test
     void paidCallbackKeepsCancelledMembershipCancelled() throws Exception {
         UUID membershipId = UUID.randomUUID();
-        membershipRepository.save(new E00MembershipEntity(
+        membershipRepository.save(new MembershipEntity(
                 membershipId,
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -233,7 +233,7 @@ class E00PaymentReceivedControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 membershipId,
                 "external-005",
@@ -244,7 +244,7 @@ class E00PaymentReceivedControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
 
-        mockMvc.perform(post("/api/e00/memberships/payment-received")
+        mockMvc.perform(post("/api/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -260,7 +260,7 @@ class E00PaymentReceivedControllerTest {
     @Test
     void repeatedPaidCallbackDoesNotDuplicateStateChanges() throws Exception {
         UUID membershipId = UUID.randomUUID();
-        E00MembershipEntity membership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity membership = membershipRepository.save(new MembershipEntity(
                 membershipId,
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -271,8 +271,8 @@ class E00PaymentReceivedControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        E00MembershipBillingReferenceEntity billingReference = billingReferenceRepository.save(
-                new E00MembershipBillingReferenceEntity(
+        MembershipBillingReferenceEntity billingReference = billingReferenceRepository.save(
+                new MembershipBillingReferenceEntity(
                         UUID.randomUUID(),
                         membershipId,
                         "external-006",
@@ -284,7 +284,7 @@ class E00PaymentReceivedControllerTest {
                 )
         );
 
-        mockMvc.perform(post("/api/e00/memberships/payment-received")
+        mockMvc.perform(post("/api/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -296,7 +296,7 @@ class E00PaymentReceivedControllerTest {
                 .andExpect(jsonPath("$.reactivated").value(false))
                 .andExpect(jsonPath("$.message").value("Payment recorded; membership status unchanged"));
 
-        mockMvc.perform(post("/api/e00/memberships/payment-received")
+        mockMvc.perform(post("/api/memberships/payment-received")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -311,7 +311,7 @@ class E00PaymentReceivedControllerTest {
                 .andExpect(jsonPath("$.reactivated").value(false))
                 .andExpect(jsonPath("$.message").value("Payment was already recorded; membership status unchanged"));
 
-        E00MembershipBillingReferenceEntity updatedBillingReference = billingReferenceRepository.findById(
+        MembershipBillingReferenceEntity updatedBillingReference = billingReferenceRepository.findById(
                 billingReference.getId()
         ).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(updatedBillingReference.getStatus()).isEqualTo("PAID");

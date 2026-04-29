@@ -1,8 +1,8 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import java.time.LocalDate;
 
-public record E00ActivateMembershipResponse(
+public record ActivateMembershipResponse(
         String membershipId,
         String customerId,
         String planId,

@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,11 +20,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
-class E00SuspendOverdueMembershipsControllerTest {
+class SuspendOverdueMembershipsControllerTest {
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> "jdbc:h2:mem:e00-suspend-overdue-test;DB_CLOSE_DELAY=-1");
+        registry.add("spring.datasource.url", () -> "jdbc:h2:mem:membership-suspend-overdue-test;DB_CLOSE_DELAY=-1");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
     }
 
@@ -32,10 +32,10 @@ class E00SuspendOverdueMembershipsControllerTest {
     private WebApplicationContext webApplicationContext;
 
     @Autowired
-    private E00MembershipRepository membershipRepository;
+    private MembershipRepository membershipRepository;
 
     @Autowired
-    private E00MembershipBillingReferenceRepository billingReferenceRepository;
+    private MembershipBillingReferenceRepository billingReferenceRepository;
 
     private MockMvc mockMvc;
 
@@ -49,7 +49,7 @@ class E00SuspendOverdueMembershipsControllerTest {
     @Test
     void suspendOverdueUsesOpenBillingReferencesAndIgnoresPaidFutureSuspendedAndCancelledMemberships()
             throws Exception {
-        E00MembershipEntity activeOverdueMembership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity activeOverdueMembership = membershipRepository.save(new MembershipEntity(
                 UUID.randomUUID(),
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -60,7 +60,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        E00MembershipEntity activePaidMembership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity activePaidMembership = membershipRepository.save(new MembershipEntity(
                 UUID.randomUUID(),
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -71,7 +71,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        E00MembershipEntity activeFutureMembership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity activeFutureMembership = membershipRepository.save(new MembershipEntity(
                 UUID.randomUUID(),
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -82,7 +82,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        E00MembershipEntity suspendedMembership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity suspendedMembership = membershipRepository.save(new MembershipEntity(
                 UUID.randomUUID(),
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -93,7 +93,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 LocalDate.parse("2026-01-01"),
                 LocalDate.parse("2027-01-01")
         ));
-        E00MembershipEntity cancelledMembership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity cancelledMembership = membershipRepository.save(new MembershipEntity(
                 UUID.randomUUID(),
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -105,7 +105,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 LocalDate.parse("2027-01-01")
         ));
 
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 activeOverdueMembership.getId(),
                 "external-open-overdue",
@@ -115,7 +115,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z"),
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 activePaidMembership.getId(),
                 "external-paid",
@@ -125,7 +125,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z"),
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 activeFutureMembership.getId(),
                 "external-future",
@@ -135,7 +135,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z"),
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 suspendedMembership.getId(),
                 "external-suspended",
@@ -145,7 +145,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z"),
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 cancelledMembership.getId(),
                 "external-cancelled",
@@ -156,7 +156,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
 
-        mockMvc.perform(post("/api/e00/memberships/suspend-overdue")
+        mockMvc.perform(post("/api/memberships/suspend-overdue")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -184,7 +184,7 @@ class E00SuspendOverdueMembershipsControllerTest {
 
     @Test
     void suspendOverdueIsIdempotent() throws Exception {
-        E00MembershipEntity activeOverdueMembership = membershipRepository.save(new E00MembershipEntity(
+        MembershipEntity activeOverdueMembership = membershipRepository.save(new MembershipEntity(
                 UUID.randomUUID(),
                 "11111111-1111-1111-1111-111111111111",
                 "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
@@ -196,7 +196,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 LocalDate.parse("2027-01-01")
         ));
 
-        billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 activeOverdueMembership.getId(),
                 "external-open-overdue",
@@ -207,7 +207,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 Instant.parse("2026-01-01T10:00:00Z")
         ));
 
-        mockMvc.perform(post("/api/e00/memberships/suspend-overdue")
+        mockMvc.perform(post("/api/memberships/suspend-overdue")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -217,7 +217,7 @@ class E00SuspendOverdueMembershipsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.suspendedMembershipIds.length()").value(1));
 
-        mockMvc.perform(post("/api/e00/memberships/suspend-overdue")
+        mockMvc.perform(post("/api/memberships/suspend-overdue")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

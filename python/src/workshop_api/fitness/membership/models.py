@@ -8,7 +8,7 @@ from sqlalchemy import Column, Date, DateTime, Integer, String
 from workshop_api.fitness.customer.database import Base
 
 
-class E00MembershipOrmModel(Base):
+class MembershipOrmModel(Base):
     __tablename__ = "memberships"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -22,7 +22,7 @@ class E00MembershipOrmModel(Base):
     end_date = Column(Date, nullable=False)
 
 
-class E00MembershipBillingReferenceOrmModel(Base):
+class MembershipBillingReferenceOrmModel(Base):
     __tablename__ = "membership_billing_references"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

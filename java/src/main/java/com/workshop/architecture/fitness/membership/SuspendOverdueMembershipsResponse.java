@@ -1,9 +1,9 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import java.time.Instant;
 import java.util.List;
 
-public record E00SuspendOverdueMembershipsResponse(
+public record SuspendOverdueMembershipsResponse(
         Instant checkedAt,
         int checkedMemberships,
         List<String> suspendedMembershipIds

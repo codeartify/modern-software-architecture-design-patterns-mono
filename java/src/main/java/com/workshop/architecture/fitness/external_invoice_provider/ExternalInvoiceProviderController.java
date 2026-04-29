@@ -83,7 +83,7 @@ public class ExternalInvoiceProviderController {
 
         try {
             restClient.post()
-                    .uri("/api/e00/memberships/payment-received")
+                    .uri("/api/memberships/payment-received")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new ExternalInvoiceProviderPaymentReceivedCallbackRequest(
                             paidInvoice.invoiceId(),

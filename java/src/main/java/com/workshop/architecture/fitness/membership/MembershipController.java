@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import com.workshop.architecture.fitness.customer.CustomerEntity;
 import com.workshop.architecture.fitness.customer.CustomerRepository;
@@ -31,20 +31,20 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
-@RequestMapping("/api/e00/memberships")
-public class E00MembershipController {
+@RequestMapping("/api/memberships")
+public class MembershipController {
 
-    private final E00MembershipRepository membershipRepository;
-    private final E00MembershipBillingReferenceRepository billingReferenceRepository;
+    private final MembershipRepository membershipRepository;
+    private final MembershipBillingReferenceRepository billingReferenceRepository;
     private final CustomerRepository customerRepository;
     private final PlanRepository planRepository;
     private final InMemoryEmailService emailService;
     private final RestClient restClient;
     private final String billingSenderEmailAddress;
 
-    public E00MembershipController(
-            E00MembershipRepository membershipRepository,
-            E00MembershipBillingReferenceRepository billingReferenceRepository,
+    public MembershipController(
+            MembershipRepository membershipRepository,
+            MembershipBillingReferenceRepository billingReferenceRepository,
             CustomerRepository customerRepository,
             PlanRepository planRepository,
             InMemoryEmailService emailService,
@@ -62,29 +62,29 @@ public class E00MembershipController {
     }
 
     @GetMapping
-    List<E00MembershipResponse> listMemberships() {
+    List<MembershipResponse> listMemberships() {
         return membershipRepository.findAll().stream()
-                .map(E00MembershipResponse::fromEntity)
+                .map(MembershipResponse::fromEntity)
                 .toList();
     }
 
     @GetMapping("/{membershipId}")
-    E00MembershipResponse getMembership(@PathVariable String membershipId) {
-        E00MembershipEntity membership = membershipRepository.findById(UUID.fromString(membershipId))
+    MembershipResponse getMembership(@PathVariable String membershipId) {
+        MembershipEntity membership = membershipRepository.findById(UUID.fromString(membershipId))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Membership %s was not found".formatted(membershipId)
                 ));
 
-        return E00MembershipResponse.fromEntity(membership);
+        return MembershipResponse.fromEntity(membership);
     }
 
     @PostMapping("/activate")
-    E00ActivateMembershipResponse activateMembership(@Valid @RequestBody E00ActivateMembershipRequest request) {
+    ActivateMembershipResponse activateMembership(@Valid @RequestBody ActivateMembershipRequest request) {
         CustomerEntity customer;
         PlanEntity plan;
-        E00MembershipEntity membership;
-        E00MembershipBillingReferenceEntity billingReference;
+        MembershipEntity membership;
+        MembershipBillingReferenceEntity billingReference;
         String email;
         String invoiceId;
         String externalInvoiceId;
@@ -116,7 +116,7 @@ public class E00MembershipController {
             );
         }
 
-        membership = membershipRepository.save(new E00MembershipEntity(
+        membership = membershipRepository.save(new MembershipEntity(
                 UUID.randomUUID(),
                 request.customerId(),
                 request.planId(),
@@ -146,7 +146,7 @@ public class E00MembershipController {
                         "Membership invoice for %s".formatted(plan.getTitle()),
                         invoiceId,
                         Map.of(
-                                "exercise", "e00",
+                                "exercise", "membership",
                                 "planId", membership.getPlanId()
                         )
                 ))
@@ -155,7 +155,7 @@ public class E00MembershipController {
 
         externalInvoiceId = externalInvoice == null ? invoiceId : externalInvoice.invoiceId();
 
-        billingReference = billingReferenceRepository.save(new E00MembershipBillingReferenceEntity(
+        billingReference = billingReferenceRepository.save(new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
                 membership.getId(),
                 externalInvoiceId,
@@ -200,7 +200,7 @@ public class E00MembershipController {
 
         emailService.send(email);
 
-        return new E00ActivateMembershipResponse(
+        return new ActivateMembershipResponse(
                 billingReference.getMembershipId().toString(),
                 membership.getCustomerId(),
                 membership.getPlanId(),
@@ -216,24 +216,24 @@ public class E00MembershipController {
     }
 
     @PostMapping("/suspend-overdue")
-    E00SuspendOverdueMembershipsResponse suspendOverdueMemberships(
-            @RequestBody(required = false) E00SuspendOverdueMembershipsRequest request
+    SuspendOverdueMembershipsResponse suspendOverdueMemberships(
+            @RequestBody(required = false) SuspendOverdueMembershipsRequest request
     ) {
         Instant checkedAt = request == null || request.checkedAt() == null ? Instant.now() : request.checkedAt();
         LocalDate checkedAtDate = checkedAt.atZone(ZoneOffset.UTC).toLocalDate();
-        List<E00MembershipEntity> memberships = membershipRepository.findAll();
-        List<E00MembershipBillingReferenceEntity> openBillingReferences = billingReferenceRepository.findByStatus("OPEN");
+        List<MembershipEntity> memberships = membershipRepository.findAll();
+        List<MembershipBillingReferenceEntity> openBillingReferences = billingReferenceRepository.findByStatus("OPEN");
         List<String> suspendedMembershipIds = new ArrayList<>();
         int checkedMemberships = 0;
 
-        for (E00MembershipEntity membership : memberships) {
+        for (MembershipEntity membership : memberships) {
             if (!"ACTIVE".equals(membership.getStatus())) {
                 continue;
             }
 
             checkedMemberships++;
 
-            E00MembershipBillingReferenceEntity overdueBillingReference = openBillingReferences.stream()
+            MembershipBillingReferenceEntity overdueBillingReference = openBillingReferences.stream()
                     .filter(billingReference -> membership.getId().equals(billingReference.getMembershipId()))
                     .filter(billingReference -> billingReference.getDueDate().isBefore(checkedAtDate))
                     .findFirst()
@@ -250,7 +250,7 @@ public class E00MembershipController {
             }
         }
 
-        return new E00SuspendOverdueMembershipsResponse(
+        return new SuspendOverdueMembershipsResponse(
                 checkedAt,
                 checkedMemberships,
                 suspendedMembershipIds
@@ -258,9 +258,9 @@ public class E00MembershipController {
     }
 
     @PostMapping("/payment-received")
-    ResponseEntity<E00PaymentReceivedResponse> paymentReceived(@RequestBody E00PaymentReceivedRequest request) {
-        E00MembershipBillingReferenceEntity billingReference;
-        E00MembershipEntity membership;
+    ResponseEntity<PaymentReceivedResponse> paymentReceived(@RequestBody PaymentReceivedRequest request) {
+        MembershipBillingReferenceEntity billingReference;
+        MembershipEntity membership;
         Instant paidAt;
         String previousMembershipStatus;
         String newMembershipStatus;
@@ -334,7 +334,7 @@ public class E00MembershipController {
             }
         }
 
-        return ResponseEntity.ok(new E00PaymentReceivedResponse(
+        return ResponseEntity.ok(new PaymentReceivedResponse(
                 paidAt,
                 membership.getId().toString(),
                 billingReference.getId().toString(),

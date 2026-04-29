@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "membership_billing_references")
-public class E00MembershipBillingReferenceEntity {
+public class MembershipBillingReferenceEntity {
 
     @Id
     private UUID id;
@@ -36,10 +36,10 @@ public class E00MembershipBillingReferenceEntity {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    protected E00MembershipBillingReferenceEntity() {
+    protected MembershipBillingReferenceEntity() {
     }
 
-    public E00MembershipBillingReferenceEntity(
+    public MembershipBillingReferenceEntity(
             UUID id,
             UUID membershipId,
             String externalInvoiceId,

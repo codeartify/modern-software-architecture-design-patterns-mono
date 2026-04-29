@@ -106,7 +106,7 @@ async def mark_invoice_paid(
     try:
         async with httpx.AsyncClient(**client_kwargs) as client:
             callback_response = await client.post(
-                "/api/e00/memberships/payment-received",
+                "/api/memberships/payment-received",
                 json=callback_request.model_dump(by_alias=True, mode="json")
                 if hasattr(callback_request, "model_dump")
                 else json.loads(callback_request.json(by_alias=True)),

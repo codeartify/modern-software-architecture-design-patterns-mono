@@ -1,13 +1,13 @@
 ### List memberships
-GET {{baseUrl}}/api/e00/memberships
+GET {{baseUrl}}/api/memberships
 Accept: application/json
 
 ### Get membership by id
-GET {{baseUrl}}/api/e00/memberships/{{membershipId}}
+GET {{baseUrl}}/api/memberships/{{membershipId}}
 Accept: application/json
 
 ### Activate membership
-POST {{baseUrl}}/api/e00/memberships/activate
+POST {{baseUrl}}/api/memberships/activate
 Content-Type: application/json
 Accept: application/json
 
@@ -24,7 +24,7 @@ Accept: application/json
 %}
 
 ### Suspend overdue memberships
-POST {{baseUrl}}/api/e00/memberships/suspend-overdue
+POST {{baseUrl}}/api/memberships/suspend-overdue
 Content-Type: application/json
 Accept: application/json
 
@@ -33,7 +33,7 @@ Accept: application/json
 }
 
 ### Record payment callback by external invoice id
-POST {{baseUrl}}/api/e00/memberships/payment-received
+POST {{baseUrl}}/api/memberships/payment-received
 Content-Type: application/json
 Accept: application/json
 
@@ -43,7 +43,7 @@ Accept: application/json
 }
 
 ### Record payment callback by external invoice reference
-POST {{baseUrl}}/api/e00/memberships/payment-received
+POST {{baseUrl}}/api/memberships/payment-received
 Content-Type: application/json
 Accept: application/json
 
@@ -53,7 +53,7 @@ Accept: application/json
 }
 
 ### Demo: reactivate seeded suspended membership after payment
-POST {{baseUrl}}/api/e00/memberships/payment-received
+POST {{baseUrl}}/api/memberships/payment-received
 Content-Type: application/json
 Accept: application/json
 
@@ -65,7 +65,7 @@ Accept: application/json
 }
 
 ### Demo: mark seeded active-overdue membership for suspension
-POST {{baseUrl}}/api/e00/memberships/suspend-overdue
+POST {{baseUrl}}/api/memberships/suspend-overdue
 Content-Type: application/json
 Accept: application/json
 

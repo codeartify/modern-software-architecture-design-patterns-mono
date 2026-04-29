@@ -1,8 +1,8 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import java.time.LocalDate;
 
-public record E00MembershipResponse(
+public record MembershipResponse(
         String membershipId,
         String customerId,
         String planId,
@@ -13,8 +13,8 @@ public record E00MembershipResponse(
         LocalDate startDate,
         LocalDate endDate
 ) {
-    static E00MembershipResponse fromEntity(E00MembershipEntity entity) {
-        return new E00MembershipResponse(
+    static MembershipResponse fromEntity(MembershipEntity entity) {
+        return new MembershipResponse(
                 entity.getId().toString(),
                 entity.getCustomerId(),
                 entity.getPlanId(),

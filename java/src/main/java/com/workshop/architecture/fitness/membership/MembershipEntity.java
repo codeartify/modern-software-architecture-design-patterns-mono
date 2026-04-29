@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership.exercise00_mixed;
+package com.workshop.architecture.fitness.membership;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "memberships")
-public class E00MembershipEntity {
+public class MembershipEntity {
 
     @Id
     private UUID id;
@@ -38,10 +38,10 @@ public class E00MembershipEntity {
     @Column(nullable = false)
     private LocalDate endDate;
 
-    protected E00MembershipEntity() {
+    protected MembershipEntity() {
     }
 
-    public E00MembershipEntity(
+    public MembershipEntity(
             UUID id,
             String customerId,
             String planId,

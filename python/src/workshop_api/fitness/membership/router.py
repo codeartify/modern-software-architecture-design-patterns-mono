@@ -18,22 +18,22 @@ from workshop_api.fitness.external_invoice_provider.schemas import (
     ExternalInvoiceProviderResponse,
     ExternalInvoiceProviderUpsertRequest,
 )
-from workshop_api.fitness.membership.exercise00_mixed.models import (
-    E00MembershipBillingReferenceOrmModel,
-    E00MembershipOrmModel,
+from workshop_api.fitness.membership.models import (
+    MembershipBillingReferenceOrmModel,
+    MembershipOrmModel,
 )
-from workshop_api.fitness.membership.exercise00_mixed.schemas import (
-    E00ActivateMembershipRequest,
-    E00ActivateMembershipResponse,
-    E00MembershipResponse,
-    E00PaymentReceivedRequest,
-    E00PaymentReceivedResponse,
-    E00SuspendOverdueMembershipsRequest,
-    E00SuspendOverdueMembershipsResponse,
+from workshop_api.fitness.membership.schemas import (
+    ActivateMembershipRequest,
+    ActivateMembershipResponse,
+    MembershipResponse,
+    PaymentReceivedRequest,
+    PaymentReceivedResponse,
+    SuspendOverdueMembershipsRequest,
+    SuspendOverdueMembershipsResponse,
 )
 from workshop_api.fitness.plan.models import PlanOrmModel
 
-router = APIRouter(prefix="/api/e00/memberships", tags=["membership-e00"])
+router = APIRouter(prefix="/api/memberships", tags=["membership"])
 
 
 def get_external_invoice_provider_base_url() -> str:
@@ -44,19 +44,19 @@ def get_billing_sender_email_address() -> str:
     return os.getenv("WORKSHOP_BILLING_SENDER_EMAIL_ADDRESS", "billing@codeartify.com")
 
 
-def _response_content(response_model: E00PaymentReceivedResponse) -> dict[str, object]:
+def _response_content(response_model: PaymentReceivedResponse) -> dict[str, object]:
     if hasattr(response_model, "model_dump"):
         return response_model.model_dump(by_alias=True, mode="json")
     return json.loads(response_model.json(by_alias=True))
 
 
-@router.get("", response_model=list[E00MembershipResponse], response_model_by_alias=True)
+@router.get("", response_model=list[MembershipResponse], response_model_by_alias=True)
 async def list_memberships(
     session: Session = Depends(get_db_session),
-) -> list[E00MembershipResponse]:
-    memberships = session.query(E00MembershipOrmModel).all()
+) -> list[MembershipResponse]:
+    memberships = session.query(MembershipOrmModel).all()
     return [
-        E00MembershipResponse(
+        MembershipResponse(
             membershipId=membership.id,
             customerId=membership.customer_id,
             planId=membership.plan_id,
@@ -73,21 +73,21 @@ async def list_memberships(
 
 @router.get(
     "/{membership_id}",
-    response_model=E00MembershipResponse,
+    response_model=MembershipResponse,
     response_model_by_alias=True,
 )
 async def get_membership(
     membership_id: uuid.UUID,
     session: Session = Depends(get_db_session),
-) -> E00MembershipResponse:
-    membership = session.get(E00MembershipOrmModel, str(membership_id))
+) -> MembershipResponse:
+    membership = session.get(MembershipOrmModel, str(membership_id))
     if membership is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Membership {membership_id} was not found",
         )
 
-    return E00MembershipResponse(
+    return MembershipResponse(
         membershipId=membership.id,
         customerId=membership.customer_id,
         planId=membership.plan_id,
@@ -102,16 +102,16 @@ async def get_membership(
 
 @router.post(
     "/activate",
-    response_model=E00ActivateMembershipResponse,
+    response_model=ActivateMembershipResponse,
     response_model_by_alias=True,
 )
 async def activate_membership(
-    activation_request: E00ActivateMembershipRequest,
+    activation_request: ActivateMembershipRequest,
     request: Request,
     session: Session = Depends(get_db_session),
     external_invoice_provider_base_url: str = Depends(get_external_invoice_provider_base_url),
     billing_sender_email_address: str = Depends(get_billing_sender_email_address),
-) -> E00ActivateMembershipResponse:
+) -> ActivateMembershipResponse:
     customer = session.get(CustomerOrmModel, str(activation_request.customer_id))
     if customer is None:
         raise HTTPException(
@@ -143,7 +143,7 @@ async def activate_membership(
             detail="Customers younger than 18 require signedByCustodian=true",
         )
 
-    membership = E00MembershipOrmModel(
+    membership = MembershipOrmModel(
         customer_id=str(activation_request.customer_id),
         plan_id=str(activation_request.plan_id),
         plan_price=int(Decimal(plan.price)),
@@ -171,7 +171,7 @@ async def activate_membership(
         description=f"Membership invoice for {plan.title}",
         externalCorrelationId=invoice_id,
         metadata={
-            "exercise": "e00",
+            "exercise": "membership",
             "planId": membership.plan_id,
         },
     )
@@ -202,7 +202,7 @@ async def activate_membership(
         external_invoice.invoice_id if external_invoice is not None else invoice_id
     )
 
-    billing_reference = E00MembershipBillingReferenceOrmModel(
+    billing_reference = MembershipBillingReferenceOrmModel(
         membership_id=membership.id,
         external_invoice_id=external_invoice_id,
         external_invoice_reference=invoice_id,
@@ -242,7 +242,7 @@ Codeartify Billing
     print(email)
     email_service.send(email)
 
-    return E00ActivateMembershipResponse(
+    return ActivateMembershipResponse(
         membershipId=membership.id,
         customerId=membership.customer_id,
         planId=membership.plan_id,
@@ -260,13 +260,13 @@ Codeartify Billing
 
 @router.post(
     "/suspend-overdue",
-    response_model=E00SuspendOverdueMembershipsResponse,
+    response_model=SuspendOverdueMembershipsResponse,
     response_model_by_alias=True,
 )
 async def suspend_overdue_memberships(
-    suspend_request: E00SuspendOverdueMembershipsRequest | None = None,
+    suspend_request: SuspendOverdueMembershipsRequest | None = None,
     session: Session = Depends(get_db_session),
-) -> E00SuspendOverdueMembershipsResponse:
+) -> SuspendOverdueMembershipsResponse:
     checked_at = (
         suspend_request.checked_at
         if suspend_request is not None and suspend_request.checked_at is not None
@@ -274,10 +274,10 @@ async def suspend_overdue_memberships(
     )
     checked_at_date = checked_at.date()
 
-    memberships = session.query(E00MembershipOrmModel).all()
+    memberships = session.query(MembershipOrmModel).all()
     open_billing_references = (
-        session.query(E00MembershipBillingReferenceOrmModel)
-        .filter(E00MembershipBillingReferenceOrmModel.status == "OPEN")
+        session.query(MembershipBillingReferenceOrmModel)
+        .filter(MembershipBillingReferenceOrmModel.status == "OPEN")
         .all()
     )
 
@@ -308,7 +308,7 @@ async def suspend_overdue_memberships(
 
     session.commit()
 
-    return E00SuspendOverdueMembershipsResponse(
+    return SuspendOverdueMembershipsResponse(
         checkedAt=checked_at,
         checkedMemberships=checked_memberships,
         suspendedMembershipIds=suspended_membership_ids,
@@ -317,13 +317,13 @@ async def suspend_overdue_memberships(
 
 @router.post(
     "/payment-received",
-    response_model=E00PaymentReceivedResponse,
+    response_model=PaymentReceivedResponse,
     response_model_by_alias=True,
 )
 async def payment_received(
-    payment_request: E00PaymentReceivedRequest,
+    payment_request: PaymentReceivedRequest,
     session: Session = Depends(get_db_session),
-) -> E00PaymentReceivedResponse | JSONResponse:
+) -> PaymentReceivedResponse | JSONResponse:
     if (
         not payment_request.external_invoice_id
         and not payment_request.external_invoice_reference
@@ -337,9 +337,9 @@ async def payment_received(
     billing_reference = None
     if payment_request.external_invoice_id:
         billing_reference = (
-            session.query(E00MembershipBillingReferenceOrmModel)
+            session.query(MembershipBillingReferenceOrmModel)
             .filter(
-                E00MembershipBillingReferenceOrmModel.external_invoice_id
+                MembershipBillingReferenceOrmModel.external_invoice_id
                 == payment_request.external_invoice_id
             )
             .one_or_none()
@@ -347,9 +347,9 @@ async def payment_received(
 
     if billing_reference is None and payment_request.external_invoice_reference:
         billing_reference = (
-            session.query(E00MembershipBillingReferenceOrmModel)
+            session.query(MembershipBillingReferenceOrmModel)
             .filter(
-                E00MembershipBillingReferenceOrmModel.external_invoice_reference
+                MembershipBillingReferenceOrmModel.external_invoice_reference
                 == payment_request.external_invoice_reference
             )
             .one_or_none()
@@ -357,9 +357,9 @@ async def payment_received(
 
     if billing_reference is None and payment_request.membership_id:
         billing_reference = (
-            session.query(E00MembershipBillingReferenceOrmModel)
+            session.query(MembershipBillingReferenceOrmModel)
             .filter(
-                E00MembershipBillingReferenceOrmModel.membership_id
+                MembershipBillingReferenceOrmModel.membership_id
                 == str(payment_request.membership_id)
             )
             .first()
@@ -383,7 +383,7 @@ async def payment_received(
         billing_reference.updated_at = paid_at
         session.add(billing_reference)
 
-    membership = session.get(E00MembershipOrmModel, billing_reference.membership_id)
+    membership = session.get(MembershipOrmModel, billing_reference.membership_id)
     if membership is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -408,7 +408,7 @@ async def payment_received(
         session.refresh(membership)
         new_membership_status = membership.status
 
-    return E00PaymentReceivedResponse(
+    return PaymentReceivedResponse(
         paidAt=paid_at,
         membershipId=membership.id,
         billingReferenceId=billing_reference.id,
