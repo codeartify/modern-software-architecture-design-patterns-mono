@@ -71,7 +71,7 @@ public class MembershipService implements ActivateMembership {
         );
 
         var storedMembership = forStoringMemberships.storeMembership(membership);
-        var invoiceDetails = new InvoiceDetails(
+        var invoiceDetails = new MembershipInvoiceDetails(
                 UUID.randomUUID(),
                 customerId,
                 membership.id(),
