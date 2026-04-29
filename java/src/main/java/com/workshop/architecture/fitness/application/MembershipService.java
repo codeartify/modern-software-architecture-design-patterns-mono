@@ -4,6 +4,7 @@ import com.workshop.architecture.fitness.application.port.inbound.ActivateMember
 import com.workshop.architecture.fitness.application.port.outbound.*;
 import com.workshop.architecture.fitness.domain.InvoiceDetails;
 import com.workshop.architecture.fitness.domain.Membership;
+import com.workshop.architecture.fitness.domain.MembershipBillingReference;
 import com.workshop.architecture.fitness.infrastructure.*;
 import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderClient;
 import jakarta.transaction.Transactional;
@@ -94,15 +95,20 @@ public class MembershipService implements ActivateMembership {
         );
 
         var storedMembership = forStoringMemberships.storeMembership(membership);
-
-
-        var invoiceDetails = new InvoiceDetails(UUID.randomUUID(), customerId, membership.id(), plan.id(), LocalDate.now().plusDays(30), plan.title(), plan.price());
+        var invoiceDetails = new InvoiceDetails(
+                UUID.randomUUID(),
+                customerId,
+                membership.id(),
+                plan.id(),
+                LocalDate.now().plusDays(30),
+                plan.title(),
+                plan.price());
 
         var externalInvoiceId = forCreatingInvoices.createInvoiceWith(invoiceDetails);
+
+
         var now = Instant.now();
-
-
-        var billingReferenceEntity = new MembershipBillingReferenceEntity(
+        var billingReference = new MembershipBillingReference(
                 UUID.randomUUID(),
                 storedMembership.id(),
                 externalInvoiceId,
@@ -112,12 +118,14 @@ public class MembershipService implements ActivateMembership {
                 now,
                 now
         );
-        var billingReference = billingReferenceRepository.save(billingReferenceEntity);
 
-        sendEmail(toEmail(billingReference, customer.emailAddress(), storedMembership.planPrice()));
+
+        var storedBillingReference = forStoringBillingReferences.storeMembershipBillingReference(billingReference);
+
+        sendEmail(toEmail(storedBillingReference, customer.emailAddress(), storedMembership.planPrice()));
 
         return new ActivateMembershipResult(
-                billingReference.getMembershipId().toString(),
+                storedBillingReference.membershipId().toString(),
                 storedMembership.customerId().toString(),
                 storedMembership.planId().toString(),
                 storedMembership.planPrice(),
@@ -125,17 +133,17 @@ public class MembershipService implements ActivateMembership {
                 storedMembership.status(),
                 storedMembership.startDate(),
                 storedMembership.endDate(),
-                billingReference.getExternalInvoiceReference(),
-                billingReference.getExternalInvoiceId(),
-                billingReference.getDueDate()
+                storedBillingReference.externalInvoiceReference(),
+                storedBillingReference.externalInvoiceId(),
+                storedBillingReference.dueDate()
         );
     }
 
 
-    private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReferenceEntity billingReference, String emailAddress, int membershipPlanPrice) {
+    private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReference billingReference, String emailAddress, int membershipPlanPrice) {
         return new CustomerActivateMembershipEmail(
-                billingReference.getExternalInvoiceReference(),
-                billingReference.getDueDate(),
+                billingReference.externalInvoiceReference(),
+                billingReference.dueDate(),
                 emailAddress,
                 membershipPlanPrice,
                 """
