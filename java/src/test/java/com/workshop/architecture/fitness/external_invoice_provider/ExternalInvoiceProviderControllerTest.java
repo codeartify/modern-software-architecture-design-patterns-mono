@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.util.Map;
 
-import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderStatus;
-import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderStore;
-import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
+import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderStatus;
+import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderStore;
+import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
