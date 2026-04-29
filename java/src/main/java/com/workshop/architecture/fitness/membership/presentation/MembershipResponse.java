@@ -1,4 +1,6 @@
-package com.workshop.architecture.fitness.membership;
+package com.workshop.architecture.fitness.membership.presentation;
+
+import com.workshop.architecture.fitness.membership.infrastructure.MembershipEntity;
 
 import java.time.LocalDate;
 

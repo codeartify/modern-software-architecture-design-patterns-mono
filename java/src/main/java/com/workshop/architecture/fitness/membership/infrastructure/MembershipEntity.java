@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership;
+package com.workshop.architecture.fitness.membership.infrastructure;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -128,72 +128,5 @@ public class MembershipEntity {
         return pauseReason;
     }
 
-    public Instant getCancelledAt() {
-        return cancelledAt;
-    }
 
-    public String getCancellationReason() {
-        return cancellationReason;
-    }
-
-    public boolean isActive() {
-        return "ACTIVE".equals(status);
-    }
-
-    public boolean isPaused() {
-        return "PAUSED".equals(status);
-    }
-
-    public boolean isSuspended() {
-        return "SUSPENDED".equals(status);
-    }
-
-    public boolean isSuspendedForNonPayment() {
-        return isSuspended() && "NON_PAYMENT".equals(reason);
-    }
-
-    // Is this domain or data access?
-    public boolean isCancelled() {
-        return "CANCELLED".equals(status);
-    }
-
-    public void suspend() {
-        this.status = "SUSPENDED";
-    }
-
-    public void suspendForNonPayment() {
-        this.status = "SUSPENDED";
-        this.reason = "NON_PAYMENT";
-    }
-
-    public void reactivateAfterPayment() {
-        this.status = "ACTIVE";
-        this.reason = null;
-    }
-
-    public void pause(LocalDate pauseStartDate, LocalDate pauseEndDate, String reason) {
-        long pauseDays = ChronoUnit.DAYS.between(pauseStartDate, pauseEndDate) + 1;
-        this.status = "PAUSED";
-        this.pauseStartDate = pauseStartDate;
-        this.pauseEndDate = pauseEndDate;
-        this.pauseReason = reason;
-        this.endDate = this.endDate.plusDays(pauseDays);
-    }
-
-    public void resumeAfterPause() {
-        this.status = "ACTIVE";
-        this.pauseStartDate = null;
-        this.pauseEndDate = null;
-        this.pauseReason = null;
-    }
-
-    public void cancel(Instant cancelledAt, String reason) {
-        this.status = "CANCELLED";
-        this.cancelledAt = cancelledAt;
-        this.cancellationReason = reason;
-    }
-
-    public void extendBy(int additionalMonths, int additionalDays) {
-        this.endDate = this.endDate.plusMonths(additionalMonths).plusDays(additionalDays);
-    }
 }

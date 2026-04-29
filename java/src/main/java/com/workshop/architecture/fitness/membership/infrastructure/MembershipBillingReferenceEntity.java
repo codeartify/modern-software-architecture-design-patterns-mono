@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership;
+package com.workshop.architecture.fitness.membership.infrastructure;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

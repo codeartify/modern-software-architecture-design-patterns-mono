@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.membership;
+package com.workshop.architecture.fitness.membership.presentation;
 
 import java.time.LocalDate;
 
