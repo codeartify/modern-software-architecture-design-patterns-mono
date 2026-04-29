@@ -5,11 +5,8 @@ import com.workshop.architecture.fitness.application.port.outbound.*;
 import com.workshop.architecture.fitness.domain.InvoiceDetails;
 import com.workshop.architecture.fitness.domain.Membership;
 import com.workshop.architecture.fitness.domain.MembershipBillingReference;
-import com.workshop.architecture.fitness.infrastructure.*;
-import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderClient;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -19,10 +16,6 @@ import java.util.UUID;
 
 @Service
 public class MembershipService implements ActivateMembership {
-    private final MembershipRepository membershipRepository;
-    private final PlanRepository planRepository;
-    private final InMemoryEmailService emailService;
-    private final String billingSenderEmailAddress;
     private final ForFindingCustomers forFindingCustomers;
     private final ForFindingPlans forFindingPlans;
     private final ForStoringMemberships forStoringMemberships;
@@ -30,36 +23,20 @@ public class MembershipService implements ActivateMembership {
     private final ForStoringBillingReferences forStoringBillingReferences;
     private final ForSendingEmails forSendingEmails;
 
-    private final MembershipBillingReferenceRepository billingReferenceRepository;
-    private final ExternalInvoiceProviderClient externalInvoiceProviderClient;
-
     public MembershipService(
-            MembershipRepository membershipRepository,
-            CustomerRepository customerRepository,
-            PlanRepository planRepository,
-            InMemoryEmailService emailService,
-            @Value("${workshop.billing.sender-email-address}") String billingSenderEmailAddress,
             ForFindingCustomers forFindingCustomers,
             ForFindingPlans forFindingPlans,
             ForStoringMemberships forStoringMemberships,
             ForCreatingInvoices forCreatingInvoices,
             ForStoringBillingReferences forStoringBillingReferences,
-            ForSendingEmails forSendingEmails,
-            MembershipBillingReferenceRepository billingReferenceRepository,
-            ExternalInvoiceProviderClient externalInvoiceProviderClient
+            ForSendingEmails forSendingEmails
     ) {
-        this.membershipRepository = membershipRepository;
-        this.planRepository = planRepository;
-        this.emailService = emailService;
-        this.billingSenderEmailAddress = billingSenderEmailAddress;
         this.forFindingCustomers = forFindingCustomers;
         this.forFindingPlans = forFindingPlans;
         this.forStoringMemberships = forStoringMemberships;
         this.forCreatingInvoices = forCreatingInvoices;
         this.forStoringBillingReferences = forStoringBillingReferences;
         this.forSendingEmails = forSendingEmails;
-        this.billingReferenceRepository = billingReferenceRepository;
-        this.externalInvoiceProviderClient = externalInvoiceProviderClient;
     }
 
     @Transactional
@@ -122,7 +99,7 @@ public class MembershipService implements ActivateMembership {
 
         var storedBillingReference = forStoringBillingReferences.storeMembershipBillingReference(billingReference);
 
-        sendEmail(toEmail(storedBillingReference, customer.emailAddress(), storedMembership.planPrice()));
+        forSendingEmails.sendEmail(toEmail(storedBillingReference, customer.emailAddress(), storedMembership.planPrice()));
 
         return new ActivateMembershipResult(
                 storedBillingReference.membershipId().toString(),
@@ -167,24 +144,6 @@ public class MembershipService implements ActivateMembership {
                         |Codeartify Billing
                         |
                         """);
-    }
-
-    private void sendEmail(CustomerActivateMembershipEmail emailDetails) {
-        var activationEmail = emailDetails.emailTemplate().formatted(
-                        emailDetails.emailAddress(),
-                        billingSenderEmailAddress,
-                        emailDetails.invoiceId(),
-                        emailDetails.invoiceId(),
-                        emailDetails.planPrice(),
-                        emailDetails.invoiceDueDate(),
-                        emailDetails.invoiceId()
-                )
-                .replace("\n|", "\n")
-                .trim();
-
-        System.out.println(activationEmail);
-
-        emailService.send(activationEmail);
     }
 
 }
