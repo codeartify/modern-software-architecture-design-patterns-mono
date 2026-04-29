@@ -2,7 +2,8 @@ package com.workshop.architecture.fitness.application;
 
 import com.workshop.architecture.fitness.application.port.inbound.ActivateMembership;
 import com.workshop.architecture.fitness.application.port.outbound.*;
-import com.workshop.architecture.fitness.domain.Plan;
+import com.workshop.architecture.fitness.domain.InvoiceDetails;
+import com.workshop.architecture.fitness.domain.Membership;
 import com.workshop.architecture.fitness.infrastructure.*;
 import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderClient;
 import jakarta.transaction.Transactional;
@@ -18,7 +19,6 @@ import java.util.UUID;
 @Service
 public class MembershipService implements ActivateMembership {
     private final MembershipRepository membershipRepository;
-    private final CustomerRepository customerRepository;
     private final PlanRepository planRepository;
     private final InMemoryEmailService emailService;
     private final String billingSenderEmailAddress;
@@ -48,7 +48,6 @@ public class MembershipService implements ActivateMembership {
             ExternalInvoiceProviderClient externalInvoiceProviderClient
     ) {
         this.membershipRepository = membershipRepository;
-        this.customerRepository = customerRepository;
         this.planRepository = planRepository;
         this.emailService = emailService;
         this.billingSenderEmailAddress = billingSenderEmailAddress;
@@ -66,8 +65,11 @@ public class MembershipService implements ActivateMembership {
     @Override
     public ActivateMembershipResult activateMembership(ActivateMembershipInput input) {
 
-        var customer = forFindingCustomers.findCustomerById(UUID.fromString(input.customerId()));
-        var plan = forFindingPlans.findPlanById(UUID.fromString(input.planId()));
+        var customerId = UUID.fromString(input.customerId());
+        var customer = forFindingCustomers.findCustomerById(customerId);
+
+        var planId = UUID.fromString(input.planId());
+        var plan = forFindingPlans.findPlanById(planId);
 
         var startDate = LocalDate.now();
         var endDate = startDate.plusMonths(plan.durationInMonths());
@@ -79,71 +81,63 @@ public class MembershipService implements ActivateMembership {
             );
         }
 
-        var membership = membershipRepository.save(new MembershipEntity(
+        var membership = new Membership(
                 UUID.randomUUID(),
-                input.customerId(),
-                input.planId(),
+                customerId,
+                planId,
                 plan.price().intValue(),
                 plan.durationInMonths(),
                 "ACTIVE",
                 null,
                 startDate,
                 endDate
-        ));
-
-
-        var invoiceId = UUID.randomUUID().toString();
-        var invoiceDueDate = LocalDate.now().plusDays(30);
-        var externalInvoiceId = externalInvoiceProviderClient.createMembershipInvoice(
-                input.customerId(),
-                membership,
-                invoiceDueDate,
-                invoiceId, plan.title()
         );
+
+        var storedMembership = forStoringMemberships.storeMembership(membership);
+
+
+        var invoiceDetails = new InvoiceDetails(UUID.randomUUID(), customerId, membership.id(), plan.id(), LocalDate.now().plusDays(30), plan.title(), plan.price());
+
+        var externalInvoiceId = forCreatingInvoices.createInvoiceWith(invoiceDetails);
         var now = Instant.now();
-        var billingReference = billingReferenceRepository.save(new MembershipBillingReferenceEntity(
+
+
+        var billingReferenceEntity = new MembershipBillingReferenceEntity(
                 UUID.randomUUID(),
-                membership.getId(),
+                storedMembership.id(),
                 externalInvoiceId,
-                invoiceId,
-                invoiceDueDate,
+                invoiceDetails.membershipId().toString(),
+                invoiceDetails.dueDate(),
                 "OPEN",
                 now,
                 now
-        ));
+        );
+        var billingReference = billingReferenceRepository.save(billingReferenceEntity);
 
-        sendEmail(toEmail(billingReference, membership, customer.emailAddress()));
+        sendEmail(toEmail(billingReference, customer.emailAddress(), storedMembership.planPrice()));
 
         return new ActivateMembershipResult(
                 billingReference.getMembershipId().toString(),
-                membership.getCustomerId(),
-                membership.getPlanId(),
-                membership.getPlanPrice(),
-                membership.getPlanDuration(),
-                membership.getStatus(),
-                membership.getStartDate(),
-                membership.getEndDate(),
+                storedMembership.customerId().toString(),
+                storedMembership.planId().toString(),
+                storedMembership.planPrice(),
+                storedMembership.planDurationInMonths(),
+                storedMembership.status(),
+                storedMembership.startDate(),
+                storedMembership.endDate(),
                 billingReference.getExternalInvoiceReference(),
                 billingReference.getExternalInvoiceId(),
                 billingReference.getDueDate()
         );
     }
 
-    private @NonNull Plan findPlanByIdOrThrow(ActivateMembershipInput input) {
-        var planEntity = planRepository.findById(UUID.fromString(input.planId()))
-                .orElseThrow(() -> new PlanNotFoundException(
-                        "Plan %s was not found".formatted(input.planId())
-                ));
-        return new Plan(planEntity.getPrice(), planEntity.getDurationInMonths(), planEntity.getTitle());
-    }
 
-
-    private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReferenceEntity billingReference, MembershipEntity membership, String emailAddress) {
+    private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReferenceEntity billingReference, String emailAddress, int membershipPlanPrice) {
         return new CustomerActivateMembershipEmail(
                 billingReference.getExternalInvoiceReference(),
                 billingReference.getDueDate(),
                 emailAddress,
-                membership.getPlanPrice(),
+                membershipPlanPrice,
                 """
                         |
                         |To: %s

@@ -21,6 +21,6 @@ public class JpaPlanRepository implements ForFindingPlans {
                 .orElseThrow(() -> new PlanNotFoundException(
                         "Plan %s was not found".formatted(planId.toString())
                 ));
-        return new Plan(planEntity.getPrice(), planEntity.getDurationInMonths(), planEntity.getTitle());
+        return new Plan(planId, planEntity.getPrice(), planEntity.getDurationInMonths(), planEntity.getTitle());
     }
 }
