@@ -5,6 +5,7 @@ import com.workshop.architecture.fitness.email.InMemoryEmailService;
 import com.workshop.architecture.fitness.membership.infrastructure.MembershipBillingReferenceRepository;
 import com.workshop.architecture.fitness.membership.infrastructure.MembershipEntity;
 import com.workshop.architecture.fitness.membership.infrastructure.MembershipRepository;
+import com.workshop.architecture.fitness.membership.presentation.ActivateMembershipResponse;
 import com.workshop.architecture.fitness.plan.PlanRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -87,7 +88,7 @@ public class MembershipService {
         var billingReference = invoiceService.createInvoice(input.customerId(), membership, plan);
 
         sendEmail(new CustomerActivateMembershipEmail(
-                billingReference.getExternalInvoiceId(),
+                billingReference.getExternalInvoiceReference(),
                 billingReference.getDueDate(),
                 customer.getEmailAddress(),
                 membership.getPlanPrice())
