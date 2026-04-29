@@ -96,7 +96,6 @@ public class MembershipService implements ActivateMembership {
                 now
         );
 
-
         var storedBillingReference = forStoringBillingReferences.storeMembershipBillingReference(billingReference);
 
         forSendingEmails.sendEmail(toEmail(storedBillingReference, customer.emailAddress(), storedMembership.planPrice()));

@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.adapter.repository.mail;
+package com.workshop.architecture.fitness.adapter.recipient.mail;
 
 import com.workshop.architecture.fitness.application.CustomerActivateMembershipEmail;
 import com.workshop.architecture.fitness.application.port.outbound.ForSendingEmails;
