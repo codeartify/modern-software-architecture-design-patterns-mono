@@ -23,6 +23,6 @@ public class JpaCustomerRepository implements ForFindingCustomers {
                         "Customer %s was not found".formatted(customerId.toString())
                 ));
 
-        return new Customer(customerEntity.getDateOfBirth(), customerEntity.getEmailAddress());
+        return new Customer(customerEntity.getId(), customerEntity.getDateOfBirth(), customerEntity.getEmailAddress());
     }
 }
