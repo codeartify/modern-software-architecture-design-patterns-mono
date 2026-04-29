@@ -1,9 +1,9 @@
 package com.workshop.architecture.fitness.layered.presentation;
 
 import com.workshop.architecture.ApiErrorResponse;
-import com.workshop.architecture.fitness.hexagon.inside.port.outbound.CustomerNotFoundException;
-import com.workshop.architecture.fitness.hexagon.inside.CustomerTooYoungException;
-import com.workshop.architecture.fitness.hexagon.inside.port.outbound.PlanNotFoundException;
+import com.workshop.architecture.fitness.clean_architecture.use_case.port.outbound.CustomerNotFoundException;
+import com.workshop.architecture.fitness.clean_architecture.use_case.exception.CustomerTooYoungException;
+import com.workshop.architecture.fitness.clean_architecture.use_case.port.outbound.PlanNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
