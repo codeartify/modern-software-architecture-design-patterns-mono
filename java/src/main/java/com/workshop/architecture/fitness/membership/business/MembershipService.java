@@ -1,16 +1,16 @@
 package com.workshop.architecture.fitness.membership.business;
 
+import com.workshop.architecture.fitness.customer.CustomerEntity;
 import com.workshop.architecture.fitness.customer.CustomerRepository;
 import com.workshop.architecture.fitness.email.InMemoryEmailService;
-import com.workshop.architecture.fitness.membership.infrastructure.MembershipBillingReferenceRepository;
+import com.workshop.architecture.fitness.membership.infrastructure.MembershipBillingReferenceEntity;
 import com.workshop.architecture.fitness.membership.infrastructure.MembershipEntity;
 import com.workshop.architecture.fitness.membership.infrastructure.MembershipRepository;
-import com.workshop.architecture.fitness.membership.presentation.ActivateMembershipResponse;
 import com.workshop.architecture.fitness.plan.PlanRepository;
 import jakarta.transaction.Transactional;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -80,12 +80,7 @@ public class MembershipService {
 
         var billingReference = invoiceService.createInvoice(input.customerId(), membership, plan);
 
-        sendEmail(new CustomerActivateMembershipEmail(
-                billingReference.getExternalInvoiceReference(),
-                billingReference.getDueDate(),
-                customer.getEmailAddress(),
-                membership.getPlanPrice())
-        );
+        sendEmail(toEmail(billingReference, customer, membership));
 
         return new ActivateMembershipResult(
                 billingReference.getMembershipId().toString(),
@@ -102,35 +97,46 @@ public class MembershipService {
         );
     }
 
-    private void sendEmail(CustomerActivateMembershipEmail customerActivateMembershipEmail) {
-        var email = """
-                |
-                |To: %s
-                |From: %s
-                |Subject: Your Membership Invoice %s
-                |
-                |Dear customer,
-                |
-                |Thank you for your membership.
-                |
-                |Please find your invoice details below:
-                |Invoice ID: %s
-                |Amount Due: CHF %s
-                |Due Date: %s
-                |
-                |Attachment: invoice-%s.pdf
-                |
-                |Kind regards,
-                |Codeartify Billing
-                |
-                """.formatted(
-                        customerActivateMembershipEmail.emailAddress(),
+    private static @NonNull CustomerActivateMembershipEmail toEmail(MembershipBillingReferenceEntity billingReference, CustomerEntity customer, MembershipEntity membership) {
+        return new CustomerActivateMembershipEmail(
+                billingReference.getExternalInvoiceReference(),
+                billingReference.getDueDate(),
+                customer.getEmailAddress(),
+                membership.getPlanPrice(),
+                """
+                        |
+                        |To: %s
+                        |From: %s
+                        |Subject: Your Membership Invoice %s
+                        |
+                        |Dear customer,
+                        |
+                        |Thank you for your membership.
+                        |
+                        |Please find your invoice details below:
+                        |Invoice ID: %s
+                        |Amount Due: CHF %s
+                        |Due Date: %s
+                        |
+                        |Attachment: invoice-%s.pdf
+                        |
+                        |Kind regards,
+                        |Codeartify Billing
+                        |
+                        """);
+    }
+
+    private void sendEmail(CustomerActivateMembershipEmail emailDetails) {
+
+
+        var email = emailDetails.emailTemplate().formatted(
+                        emailDetails.emailAddress(),
                         billingSenderEmailAddress,
-                        customerActivateMembershipEmail.invoiceId(),
-                        customerActivateMembershipEmail.invoiceId(),
-                        customerActivateMembershipEmail.planPrice(),
-                        customerActivateMembershipEmail.invoiceDueDate(),
-                        customerActivateMembershipEmail.invoiceId()
+                        emailDetails.invoiceId(),
+                        emailDetails.invoiceId(),
+                        emailDetails.planPrice(),
+                        emailDetails.invoiceDueDate(),
+                        emailDetails.invoiceId()
                 )
                 .replace("\n|", "\n")
                 .trim();
