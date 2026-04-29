@@ -19,32 +19,25 @@ import java.util.UUID;
 @Service
 public class MembershipService {
     private final MembershipRepository membershipRepository;
-    private final MembershipBillingReferenceRepository billingReferenceRepository;
     private final CustomerRepository customerRepository;
     private final PlanRepository planRepository;
     private final InMemoryEmailService emailService;
-    private final RestClient restClient;
     private final String billingSenderEmailAddress;
     private final InvoiceService invoiceService;
 
 
     public MembershipService(
             MembershipRepository membershipRepository,
-            MembershipBillingReferenceRepository billingReferenceRepository,
             CustomerRepository customerRepository,
             PlanRepository planRepository,
             InMemoryEmailService emailService,
-            RestClient.Builder restClientBuilder,
-            @Value("${workshop.external-invoice-provider.base-url}") String externalInvoiceProviderBaseUrl,
             @Value("${workshop.billing.sender-email-address}") String billingSenderEmailAddress,
             InvoiceService invoiceService
     ) {
         this.membershipRepository = membershipRepository;
-        this.billingReferenceRepository = billingReferenceRepository;
         this.customerRepository = customerRepository;
         this.planRepository = planRepository;
         this.emailService = emailService;
-        this.restClient = restClientBuilder.baseUrl(externalInvoiceProviderBaseUrl).build();
         this.billingSenderEmailAddress = billingSenderEmailAddress;
         this.invoiceService = invoiceService;
     }
