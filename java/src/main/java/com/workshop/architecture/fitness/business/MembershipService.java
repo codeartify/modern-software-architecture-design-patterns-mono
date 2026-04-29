@@ -1,12 +1,6 @@
 package com.workshop.architecture.fitness.business;
 
-import com.workshop.architecture.fitness.infrastructure.CustomerEntity;
-import com.workshop.architecture.fitness.infrastructure.CustomerRepository;
-import com.workshop.architecture.fitness.infrastructure.InMemoryEmailService;
-import com.workshop.architecture.fitness.infrastructure.MembershipBillingReferenceEntity;
-import com.workshop.architecture.fitness.infrastructure.MembershipEntity;
-import com.workshop.architecture.fitness.infrastructure.MembershipRepository;
-import com.workshop.architecture.fitness.infrastructure.PlanRepository;
+import com.workshop.architecture.fitness.infrastructure.*;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
