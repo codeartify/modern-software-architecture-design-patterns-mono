@@ -26,11 +26,11 @@ from workshop_api.fitness.hexagon.outside.driven.mail.in_memory_mail_sender impo
 from workshop_api.fitness.hexagon.outside.driven.repository.external import (
     ExternalInvoiceRepository,
 )
-from workshop_api.fitness.hexagon.outside.driven.repository.jpa import (
-    JpaCustomerRepository,
-    JpaMembershipBillingReferencesRepository,
-    JpaMembershipRepository,
-    JpaPlanRepository,
+from workshop_api.fitness.hexagon.outside.driven.repository.sqlalchemy import (
+    SqlAlchemyCustomerRepository,
+    SqlAlchemyMembershipBillingReferencesRepository,
+    SqlAlchemyMembershipRepository,
+    SqlAlchemyPlanRepository,
 )
 from workshop_api.fitness.hexagon.outside.driver.activate_membership_request import (
     ActivateMembershipRequest,
@@ -71,14 +71,14 @@ def get_activate_membership(
     billing_sender_email_address: str = Depends(get_billing_sender_email_address),
 ) -> ActivateMembership:
     return MembershipService(
-        for_finding_customers=JpaCustomerRepository(CustomerRepository(session)),
-        for_finding_plans=JpaPlanRepository(PlanRepository(session)),
-        for_storing_memberships=JpaMembershipRepository(MembershipRepository(session)),
+        for_finding_customers=SqlAlchemyCustomerRepository(CustomerRepository(session)),
+        for_finding_plans=SqlAlchemyPlanRepository(PlanRepository(session)),
+        for_storing_memberships=SqlAlchemyMembershipRepository(MembershipRepository(session)),
         for_creating_invoices=ExternalInvoiceRepository(
             external_invoice_provider_base_url,
             app=request.app,
         ),
-        for_storing_billing_references=JpaMembershipBillingReferencesRepository(
+        for_storing_billing_references=SqlAlchemyMembershipBillingReferencesRepository(
             MembershipBillingReferenceRepository(session)
         ),
         for_sending_emails=InMemoryMailSender(

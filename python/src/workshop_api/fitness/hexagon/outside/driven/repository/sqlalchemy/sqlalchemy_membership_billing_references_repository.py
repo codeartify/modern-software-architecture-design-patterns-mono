@@ -14,7 +14,7 @@ from workshop_api.fitness.layered.infrastructure.membership_entity import (
 )
 
 
-class JpaMembershipBillingReferencesRepository(ForStoringBillingReferences):
+class SqlAlchemyMembershipBillingReferencesRepository(ForStoringBillingReferences):
     def __init__(
         self,
         billing_reference_repository: MembershipBillingReferenceRepository,
