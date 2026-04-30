@@ -2,10 +2,12 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from workshop_api.fitness.external_invoice_provider.models import ExternalInvoiceProviderStatus
+from workshop_api.external_invoice_provider.invoice_provider_status import (
+    InvoiceProviderStatus,
+)
 
 
-class ExternalInvoiceProviderUpsertRequest(BaseModel):
+class InvoiceProviderUpsertRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     customer_reference: str = Field(alias="customerReference")
@@ -13,7 +15,7 @@ class ExternalInvoiceProviderUpsertRequest(BaseModel):
     amount_in_cents: int = Field(alias="amountInCents")
     currency: str
     due_date: date = Field(alias="dueDate")
-    status: ExternalInvoiceProviderStatus
+    status: InvoiceProviderStatus
     description: str | None = None
     external_correlation_id: str | None = Field(
         default=None,
@@ -22,7 +24,7 @@ class ExternalInvoiceProviderUpsertRequest(BaseModel):
     metadata: dict[str, str] | None = None
 
 
-class ExternalInvoiceProviderResponse(BaseModel):
+class InvoiceProviderResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     invoice_id: str = Field(alias="invoiceId", serialization_alias="invoiceId")
@@ -37,7 +39,7 @@ class ExternalInvoiceProviderResponse(BaseModel):
     amount_in_cents: int = Field(alias="amountInCents", serialization_alias="amountInCents")
     currency: str
     due_date: date = Field(alias="dueDate", serialization_alias="dueDate")
-    status: ExternalInvoiceProviderStatus
+    status: InvoiceProviderStatus
     description: str | None = None
     external_correlation_id: str | None = Field(
         default=None,
@@ -47,7 +49,7 @@ class ExternalInvoiceProviderResponse(BaseModel):
     metadata: dict[str, str] | None = None
 
 
-class ExternalInvoiceProviderPaymentReceivedCallbackRequest(BaseModel):
+class InvoiceProviderPaymentReceivedCallbackRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     external_invoice_id: str | None = Field(
