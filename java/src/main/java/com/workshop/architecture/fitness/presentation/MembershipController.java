@@ -1,7 +1,7 @@
 package com.workshop.architecture.fitness.presentation;
 
-import com.workshop.architecture.fitness.business.ActivateMembershipInput;
-import com.workshop.architecture.fitness.business.MembershipService;
+import com.workshop.architecture.fitness.business.application.ActivateMembershipInput;
+import com.workshop.architecture.fitness.business.application.MembershipService;
 import com.workshop.architecture.fitness.infrastructure.MembershipEntity;
 import com.workshop.architecture.fitness.infrastructure.MembershipRepository;
 import jakarta.transaction.Transactional;

@@ -1,7 +1,7 @@
 package com.workshop.architecture.config;
 
 import com.workshop.architecture.fitness.infrastructure.CustomerNotFoundException;
-import com.workshop.architecture.fitness.business.CustomerTooYoungException;
+import com.workshop.architecture.fitness.business.application.CustomerTooYoungException;
 import com.workshop.architecture.fitness.infrastructure.PlanNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;

@@ -1,5 +1,6 @@
-package com.workshop.architecture.fitness.business;
+package com.workshop.architecture.fitness.business.application;
 
+import com.workshop.architecture.fitness.business.domain.CustomerActivateMembershipEmail;
 import com.workshop.architecture.fitness.infrastructure.*;
 import com.workshop.architecture.fitness.infrastructure.ExternalInvoiceProviderClient;
 import jakarta.transaction.Transactional;
