@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from workshop_api.fitness import database
 from workshop_api.fitness.database import Base
-from workshop_api.fitness.shared.customer_entity import CustomerOrmModel
+from workshop_api.fitness.managing_customers.shared.customer_entity import CustomerOrmModel
 from workshop_api.main import app
 
 

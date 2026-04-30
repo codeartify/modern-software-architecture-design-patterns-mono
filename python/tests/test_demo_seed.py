@@ -6,12 +6,12 @@ from sqlalchemy.orm import sessionmaker
 
 from workshop_api.fitness import database
 from workshop_api.fitness.database import Base
-from workshop_api.fitness.shared.customer_entity import CustomerOrmModel
-from workshop_api.fitness.shared.membership_entity import (
+from workshop_api.fitness.managing_customers.shared.customer_entity import CustomerOrmModel
+from workshop_api.fitness.managing_memberships.shared.membership_entity import (
     MembershipBillingReferenceOrmModel,
     MembershipOrmModel,
 )
-from workshop_api.fitness.shared.plan_entity import PlanOrmModel
+from workshop_api.fitness.managing_plans.shared.plan_entity import PlanOrmModel
 
 
 def test_seed_demo_data_populates_expected_workshop_records(tmp_path: Path, monkeypatch) -> None:

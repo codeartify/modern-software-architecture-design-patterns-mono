@@ -11,13 +11,13 @@ from workshop_api.external_invoice_provider.invoice_provider_controller import (
 )
 from workshop_api.fitness import database
 from workshop_api.fitness.database import Base
-from workshop_api.fitness.shared.customer_entity import CustomerOrmModel
-from workshop_api.fitness.shared.in_memory_email_service import email_service
-from workshop_api.fitness.shared.membership_entity import (
+from workshop_api.fitness.managing_customers.shared.customer_entity import CustomerOrmModel
+from workshop_api.fitness.managing_memberships.shared.in_memory_email_service import email_service
+from workshop_api.fitness.managing_memberships.shared.membership_entity import (
     MembershipBillingReferenceOrmModel,
     MembershipOrmModel,
 )
-from workshop_api.fitness.shared.plan_entity import PlanOrmModel
+from workshop_api.fitness.managing_plans.shared.plan_entity import PlanOrmModel
 from workshop_api.main import app
 
 MEMBERSHIPS_BASE_PATH = "/api/memberships"

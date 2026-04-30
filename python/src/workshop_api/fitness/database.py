@@ -43,12 +43,12 @@ def get_db_session() -> Generator[Session]:
 
 
 def seed_demo_data() -> None:
-    from workshop_api.fitness.shared.customer_entity import CustomerOrmModel
-    from workshop_api.fitness.shared.membership_entity import (
+    from workshop_api.fitness.managing_customers.shared.customer_entity import CustomerOrmModel
+    from workshop_api.fitness.managing_memberships.shared.membership_entity import (
         MembershipBillingReferenceOrmModel,
         MembershipOrmModel,
     )
-    from workshop_api.fitness.shared.plan_entity import PlanOrmModel
+    from workshop_api.fitness.managing_plans.shared.plan_entity import PlanOrmModel
 
     seeded_at = datetime(2026, 1, 1, 10, 0, tzinfo=UTC)
     updated_paid_at = datetime(2026, 2, 1, 10, 0, tzinfo=UTC)
@@ -287,12 +287,12 @@ def ensure_workshop_schema() -> None:
 
 
 def init_db() -> None:
-    from workshop_api.fitness.shared.customer_entity import CustomerOrmModel
-    from workshop_api.fitness.shared.membership_entity import (
+    from workshop_api.fitness.managing_customers.shared.customer_entity import CustomerOrmModel
+    from workshop_api.fitness.managing_memberships.shared.membership_entity import (
         MembershipBillingReferenceOrmModel,
         MembershipOrmModel,
     )
-    from workshop_api.fitness.shared.plan_entity import PlanOrmModel
+    from workshop_api.fitness.managing_plans.shared.plan_entity import PlanOrmModel
 
     try:
         Base.metadata.create_all(

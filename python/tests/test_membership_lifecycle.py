@@ -10,7 +10,7 @@ from workshop_api.external_invoice_provider.invoice_provider_controller import (
 )
 from workshop_api.fitness import database
 from workshop_api.fitness.database import Base
-from workshop_api.fitness.shared.membership_entity import (
+from workshop_api.fitness.managing_memberships.shared.membership_entity import (
     MembershipBillingReferenceOrmModel,
     MembershipOrmModel,
 )
