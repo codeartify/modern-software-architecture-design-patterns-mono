@@ -110,7 +110,6 @@ async def get_membership(
         planPrice=membership.plan_price,
         planDuration=membership.plan_duration,
         status=membership.status,
-        reason=membership.reason,
         startDate=membership.start_date,
         endDate=membership.end_date,
     )
@@ -212,8 +211,6 @@ async def activate_membership(
             else ExternalInvoiceProviderResponse.parse_obj(external_invoice_http_response.json())
         )
 
-    # TODO: allow a nullable external_invoice_id once the workshop baseline no longer
-    # requires this local billing reference column to be non-null.
     external_invoice_id = (
         external_invoice.invoice_id if external_invoice is not None else invoice_id
     )
