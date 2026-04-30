@@ -1,0 +1,2 @@
+class CustomerTooYoungException(Exception):
+    pass

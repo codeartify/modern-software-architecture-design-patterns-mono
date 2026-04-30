@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from workshop_api.fitness.infrastructure import database
-from workshop_api.fitness.infrastructure.database import Base
-from workshop_api.fitness.infrastructure.plan_entity import PlanOrmModel
+from workshop_api.fitness.layered.infrastructure import database
+from workshop_api.fitness.layered.infrastructure.database import Base
+from workshop_api.fitness.layered.infrastructure.plan_entity import PlanOrmModel
 from workshop_api.main import app
 
 
