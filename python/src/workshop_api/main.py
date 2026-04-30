@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from workshop_api.external_invoice_provider.invoice_provider_controller import (
     router as external_invoice_provider_router,
 )
-from workshop_api.fitness.hexagon.outside.driver.membership_controller import (
+from workshop_api.fitness.clean_architecture.adapter.controller.membership_controller import (
     router as membership_router,
 )
 from workshop_api.fitness.layered.infrastructure.database import init_db
