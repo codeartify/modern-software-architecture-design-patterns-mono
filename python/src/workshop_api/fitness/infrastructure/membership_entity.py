@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, Date, DateTime, Integer, String
 
-from workshop_api.fitness.database import Base
+from workshop_api.fitness.infrastructure.database import Base
 
 
 class MembershipOrmModel(Base):
