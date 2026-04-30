@@ -10,7 +10,7 @@ from workshop_api.fitness.layered.infrastructure.membership_repository import (
 )
 
 
-class JpaMembershipRepository(ForStoringMemberships):
+class SqlAlchemyMembershipRepository(ForStoringMemberships):
     def __init__(self, membership_repository: MembershipRepository) -> None:
         self.membership_repository = membership_repository
 
