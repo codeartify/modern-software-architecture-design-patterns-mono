@@ -20,7 +20,7 @@ except ImportError:
     Base: Any = declarative_base()
 
 
-ROOT_DIR = Path(__file__).resolve().parents[4]
+ROOT_DIR = Path(__file__).resolve().parents[5]
 DATABASE_DIR = ROOT_DIR / "database"
 DATABASE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -43,12 +43,12 @@ def get_db_session() -> Generator[Session]:
 
 
 def seed_demo_data() -> None:
-    from workshop_api.fitness.customer_entity import CustomerOrmModel
-    from workshop_api.fitness.membership_entity import (
+    from workshop_api.fitness.infrastructure.customer_entity import CustomerOrmModel
+    from workshop_api.fitness.infrastructure.membership_entity import (
         MembershipBillingReferenceOrmModel,
         MembershipOrmModel,
     )
-    from workshop_api.fitness.plan_entity import PlanOrmModel
+    from workshop_api.fitness.infrastructure.plan_entity import PlanOrmModel
 
     seeded_at = datetime(2026, 1, 1, 10, 0, tzinfo=UTC)
     updated_paid_at = datetime(2026, 2, 1, 10, 0, tzinfo=UTC)
@@ -287,12 +287,12 @@ def ensure_workshop_schema() -> None:
 
 
 def init_db() -> None:
-    from workshop_api.fitness.customer_entity import CustomerOrmModel
-    from workshop_api.fitness.membership_entity import (
+    from workshop_api.fitness.infrastructure.customer_entity import CustomerOrmModel
+    from workshop_api.fitness.infrastructure.membership_entity import (
         MembershipBillingReferenceOrmModel,
         MembershipOrmModel,
     )
-    from workshop_api.fitness.plan_entity import PlanOrmModel
+    from workshop_api.fitness.infrastructure.plan_entity import PlanOrmModel
 
     try:
         Base.metadata.create_all(
