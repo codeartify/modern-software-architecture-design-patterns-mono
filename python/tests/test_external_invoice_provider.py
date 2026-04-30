@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from workshop_api.fitness.external_invoice_provider.router import store
+from workshop_api.external_invoice_provider.invoice_provider_controller import store
 from workshop_api.main import app
 
 

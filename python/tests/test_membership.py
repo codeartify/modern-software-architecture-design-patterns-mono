@@ -6,16 +6,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from workshop_api.fitness.customer import database
-from workshop_api.fitness.customer.database import Base
-from workshop_api.fitness.customer.models import CustomerOrmModel
-from workshop_api.fitness.email.service import email_service
-from workshop_api.fitness.external_invoice_provider.router import store as external_invoice_store
-from workshop_api.fitness.membership.models import (
+from workshop_api.external_invoice_provider.invoice_provider_controller import (
+    store as external_invoice_store,
+)
+from workshop_api.fitness import database
+from workshop_api.fitness.customer_entity import CustomerOrmModel
+from workshop_api.fitness.database import Base
+from workshop_api.fitness.in_memory_email_service import email_service
+from workshop_api.fitness.membership_entity import (
     MembershipBillingReferenceOrmModel,
     MembershipOrmModel,
 )
-from workshop_api.fitness.plan.models import PlanOrmModel
+from workshop_api.fitness.plan_entity import PlanOrmModel
 from workshop_api.main import app
 
 MEMBERSHIPS_BASE_PATH = "/api/memberships"
@@ -92,9 +94,9 @@ def test_membership_activate_membership_creates_membership_invoice_and_email(
     assert response.json()["status"] == "ACTIVE"
     assert response.json()["planPrice"] == 999
     assert response.json()["planDuration"] == 12
-    assert len(external_invoice_store.list_invoices()) == 1
+    assert len(external_invoice_store.find_all()) == 1
     assert (
-        external_invoice_store.list_invoices()[0].contract_reference
+        external_invoice_store.find_all()[0].contract_reference
         == response.json()["membershipId"]
     )
     verification_session = test_sessionmaker()
@@ -187,7 +189,7 @@ def test_membership_activate_membership_rejects_minor_without_custodian_signatur
         "message": "Customers younger than 18 require signedByCustodian=true",
         "path": f"{MEMBERSHIPS_BASE_PATH}/activate",
     }
-    assert external_invoice_store.list_invoices() == []
+    assert external_invoice_store.find_all() == []
     assert email_service.sent_emails() == []
 
     app.dependency_overrides.clear()
@@ -1110,7 +1112,7 @@ def test_membership_pause_active_membership_extends_end_date_without_side_effect
     assert membership.pause_reason == "Vacation"
     assert verification_session.query(MembershipBillingReferenceOrmModel).count() == 1
     verification_session.close()
-    assert external_invoice_store.list_invoices() == []
+    assert external_invoice_store.find_all() == []
     assert email_service.sent_emails() == []
     app.dependency_overrides.clear()
 
@@ -1185,7 +1187,7 @@ def test_membership_resume_paused_membership_preserves_end_date_and_billing(
     assert membership.pause_start_date is None
     assert verification_session.query(MembershipBillingReferenceOrmModel).count() == 1
     verification_session.close()
-    assert external_invoice_store.list_invoices() == []
+    assert external_invoice_store.find_all() == []
     assert email_service.sent_emails() == []
     app.dependency_overrides.clear()
 
@@ -1254,7 +1256,7 @@ def test_membership_cancel_paused_membership_and_reject_second_cancellation(
     verification_session = test_sessionmaker()
     assert verification_session.get(MembershipOrmModel, membership_id).status == "CANCELLED"
     verification_session.close()
-    assert external_invoice_store.list_invoices() == []
+    assert external_invoice_store.find_all() == []
     assert email_service.sent_emails() == []
     app.dependency_overrides.clear()
 
@@ -1317,7 +1319,7 @@ def test_membership_non_billable_extension_preserves_status_and_does_not_create_
     verification_session = test_sessionmaker()
     assert verification_session.query(MembershipBillingReferenceOrmModel).count() == 1
     verification_session.close()
-    assert external_invoice_store.list_invoices() == []
+    assert external_invoice_store.find_all() == []
     assert email_service.sent_emails() == []
     app.dependency_overrides.clear()
 
@@ -1340,8 +1342,8 @@ def test_membership_billable_extension_creates_external_invoice_and_billing_refe
     assert response.json()["newEndDate"] == "2027-02-10"
     assert response.json()["billable"] is True
     assert response.json()["billingReferenceId"] is not None
-    assert len(external_invoice_store.list_invoices()) == 1
-    assert external_invoice_store.list_invoices()[0].amount_in_cents == 250
+    assert len(external_invoice_store.find_all()) == 1
+    assert external_invoice_store.find_all()[0].amount_in_cents == 250
     verification_session = test_sessionmaker()
     assert verification_session.query(MembershipBillingReferenceOrmModel).count() == 1
     verification_session.close()

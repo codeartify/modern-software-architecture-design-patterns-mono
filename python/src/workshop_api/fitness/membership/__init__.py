@@ -1,1 +1,0 @@
-"""Membership exercise packages."""

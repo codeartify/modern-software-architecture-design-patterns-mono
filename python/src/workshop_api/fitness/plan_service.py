@@ -3,8 +3,8 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from workshop_api.fitness.errors import NotFoundError
-from workshop_api.fitness.plan.models import PlanOrmModel
-from workshop_api.fitness.plan.schemas import PlanResponse, PlanUpsertRequest
+from workshop_api.fitness.plan_entity import PlanOrmModel
+from workshop_api.fitness.plan_schemas import PlanResponse, PlanUpsertRequest
 
 
 class PlanService:
