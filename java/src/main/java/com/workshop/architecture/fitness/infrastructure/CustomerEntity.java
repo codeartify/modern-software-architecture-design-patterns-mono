@@ -5,7 +5,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -54,5 +59,18 @@ public class CustomerEntity {
         this.name = request.name();
         this.dateOfBirth = request.dateOfBirth();
         this.emailAddress = request.emailAddress();
+    }
+
+    public static record ExternalInvoiceProviderUpsertRequest(
+            @NotBlank String customerReference,
+            @NotBlank String contractReference,
+            @Min(0) int amountInCents,
+            @NotBlank String currency,
+            @NotNull LocalDate dueDate,
+            @NotNull ExternalInvoiceProviderStatus status,
+            String description,
+            String externalCorrelationId,
+            Map<String, String> metadata
+    ) {
     }
 }

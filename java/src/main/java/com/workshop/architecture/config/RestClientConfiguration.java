@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.presentation;
+package com.workshop.architecture.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

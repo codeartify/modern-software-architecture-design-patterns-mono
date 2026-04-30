@@ -1,7 +1,5 @@
-package com.workshop.architecture.fitness.infrastructure.external_invoice_provider;
+package com.workshop.architecture.fitness.infrastructure;
 
-import com.workshop.architecture.fitness.infrastructure.MembershipEntity;
-import com.workshop.architecture.fitness.infrastructure.PlanEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -31,7 +29,7 @@ public class ExternalInvoiceProviderClient {
             LocalDate invoiceDueDate,
             String invoiceId
     ) {
-        var request = new ExternalInvoiceProviderUpsertRequest(
+        var request = new CustomerEntity.ExternalInvoiceProviderUpsertRequest(
                 customerId,
                 membership.getId().toString(),
                 membership.getPlanPrice(),

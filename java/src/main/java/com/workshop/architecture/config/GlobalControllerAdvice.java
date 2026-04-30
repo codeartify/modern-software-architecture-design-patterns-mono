@@ -1,6 +1,5 @@
-package com.workshop.architecture.fitness.presentation;
+package com.workshop.architecture.config;
 
-import com.workshop.architecture.ApiErrorResponse;
 import com.workshop.architecture.fitness.infrastructure.CustomerNotFoundException;
 import com.workshop.architecture.fitness.business.CustomerTooYoungException;
 import com.workshop.architecture.fitness.infrastructure.PlanNotFoundException;

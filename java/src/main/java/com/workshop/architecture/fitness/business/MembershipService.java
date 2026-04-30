@@ -1,7 +1,7 @@
 package com.workshop.architecture.fitness.business;
 
 import com.workshop.architecture.fitness.infrastructure.*;
-import com.workshop.architecture.fitness.infrastructure.external_invoice_provider.ExternalInvoiceProviderClient;
+import com.workshop.architecture.fitness.infrastructure.ExternalInvoiceProviderClient;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
