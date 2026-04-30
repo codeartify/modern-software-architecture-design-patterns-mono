@@ -4,7 +4,7 @@ import uuid
 
 from sqlalchemy import Column, Integer, Numeric, String
 
-from workshop_api.fitness.customer.database import Base
+from workshop_api.fitness.database import Base
 
 
 class PlanOrmModel(Base):

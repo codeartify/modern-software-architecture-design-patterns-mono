@@ -1,25 +1,25 @@
-from workshop_api.fitness.external_invoice_provider.schemas import (
-    ExternalInvoiceProviderResponse,
-    ExternalInvoiceProviderUpsertRequest,
+from workshop_api.external_invoice_provider.invoice_provider_schemas import (
+    InvoiceProviderResponse,
+    InvoiceProviderUpsertRequest,
 )
 
 
-class ExternalInvoiceProviderStore:
+class InvoiceProviderStore:
     def __init__(self) -> None:
-        self._invoices: dict[str, ExternalInvoiceProviderResponse] = {}
+        self._invoices: dict[str, InvoiceProviderResponse] = {}
 
-    def list_invoices(self) -> list[ExternalInvoiceProviderResponse]:
+    def find_all(self) -> list[InvoiceProviderResponse]:
         return list(self._invoices.values())
 
-    def get_invoice(self, invoice_id: str) -> ExternalInvoiceProviderResponse | None:
+    def find_by_id(self, invoice_id: str) -> InvoiceProviderResponse | None:
         return self._invoices.get(invoice_id)
 
     def save(
         self,
         invoice_id: str,
-        request: ExternalInvoiceProviderUpsertRequest,
-    ) -> ExternalInvoiceProviderResponse:
-        response = ExternalInvoiceProviderResponse(
+        request: InvoiceProviderUpsertRequest,
+    ) -> InvoiceProviderResponse:
+        response = InvoiceProviderResponse(
             invoiceId=invoice_id,
             customerReference=request.customer_reference,
             contractReference=request.contract_reference,
@@ -36,8 +36,8 @@ class ExternalInvoiceProviderStore:
 
     def save_response(
         self,
-        response: ExternalInvoiceProviderResponse,
-    ) -> ExternalInvoiceProviderResponse:
+        response: InvoiceProviderResponse,
+    ) -> InvoiceProviderResponse:
         self._invoices[response.invoice_id] = response
         return response
 
