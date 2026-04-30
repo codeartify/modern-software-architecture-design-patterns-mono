@@ -1,32 +1,35 @@
 import calendar
 import json
 import os
-import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from uuid import uuid4
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from workshop_api.fitness.customer_entity import CustomerOrmModel
+from workshop_api.fitness.activate_membership.activate_membership_request import (
+    ActivateMembershipRequest,
+)
+from workshop_api.fitness.activate_membership.activate_membership_response import (
+    ActivateMembershipResponse,
+)
 from workshop_api.fitness.database import get_db_session
-from workshop_api.fitness.in_memory_email_service import email_service
-from workshop_api.fitness.invoice_provider_schemas import (
+from workshop_api.fitness.shared.customer_entity import CustomerOrmModel
+from workshop_api.fitness.shared.external_invoice_provider_response import (
     ExternalInvoiceProviderResponse,
+)
+from workshop_api.fitness.shared.external_invoice_provider_upsert_request import (
     ExternalInvoiceProviderUpsertRequest,
 )
-from workshop_api.fitness.invoice_provider_status import ExternalInvoiceProviderStatus
-from workshop_api.fitness.membership_entity import (
+from workshop_api.fitness.shared.in_memory_email_service import email_service
+from workshop_api.fitness.shared.invoice_provider_status import ExternalInvoiceProviderStatus
+from workshop_api.fitness.shared.membership_entity import (
     MembershipBillingReferenceOrmModel,
     MembershipOrmModel,
 )
-from workshop_api.fitness.membership_schemas import (
-    ActivateMembershipRequest,
-    ActivateMembershipResponse,
-    MembershipResponse,
-)
-from workshop_api.fitness.plan_entity import PlanOrmModel
+from workshop_api.fitness.shared.plan_entity import PlanOrmModel
 
 router = APIRouter(prefix="/api/memberships", tags=["membership"])
 
@@ -37,56 +40,6 @@ def get_external_invoice_provider_base_url() -> str:
 
 def get_billing_sender_email_address() -> str:
     return os.getenv("WORKSHOP_BILLING_SENDER_EMAIL_ADDRESS", "billing@codeartify.com")
-
-
-@router.get("", response_model=list[MembershipResponse], response_model_by_alias=True)
-async def list_memberships(
-    session: Session = Depends(get_db_session),
-) -> list[MembershipResponse]:
-    memberships = session.query(MembershipOrmModel).all()
-    return [
-        MembershipResponse(
-            membershipId=membership.id,
-            customerId=membership.customer_id,
-            planId=membership.plan_id,
-            planPrice=membership.plan_price,
-            planDuration=membership.plan_duration,
-            status=membership.status,
-            reason=membership.reason,
-            startDate=membership.start_date,
-            endDate=membership.end_date,
-        )
-        for membership in memberships
-    ]
-
-
-@router.get(
-    "/{membership_id}",
-    response_model=MembershipResponse,
-    response_model_by_alias=True,
-)
-async def get_membership(
-    membership_id: uuid.UUID,
-    session: Session = Depends(get_db_session),
-) -> MembershipResponse:
-    membership = session.get(MembershipOrmModel, str(membership_id))
-    if membership is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Membership {membership_id} was not found",
-        )
-
-    return MembershipResponse(
-        membershipId=membership.id,
-        customerId=membership.customer_id,
-        planId=membership.plan_id,
-        planPrice=membership.plan_price,
-        planDuration=membership.plan_duration,
-        status=membership.status,
-        reason=membership.reason,
-        startDate=membership.start_date,
-        endDate=membership.end_date,
-    )
 
 
 @router.post(
@@ -121,11 +74,11 @@ async def activate_membership(
     end_month = (total_month_index % 12) + 1
     end_day = min(start_date.day, calendar.monthrange(end_year, end_month)[1])
     end_date = date(end_year, end_month, end_day)
+
     customer_age = start_date.year - customer.date_of_birth.year - (
         (start_date.month, start_date.day)
         < (customer.date_of_birth.month, customer.date_of_birth.day)
     )
-
     if customer_age < 18 and activation_request.signed_by_custodian is not True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -133,11 +86,13 @@ async def activate_membership(
         )
 
     membership = MembershipOrmModel(
+        id=str(uuid4()),
         customer_id=str(activation_request.customer_id),
         plan_id=str(activation_request.plan_id),
         plan_price=int(Decimal(plan.price)),
         plan_duration=plan.duration_in_months,
         status="ACTIVE",
+        reason=None,
         start_date=start_date,
         end_date=end_date,
     )
@@ -145,7 +100,7 @@ async def activate_membership(
     session.commit()
     session.refresh(membership)
 
-    invoice_id = str(uuid.uuid4())
+    invoice_id = str(uuid4())
     invoice_due_date = date.today() + timedelta(days=30)
     now = datetime.now(UTC)
 
@@ -158,37 +113,18 @@ async def activate_membership(
         status=ExternalInvoiceProviderStatus.OPEN,
         description=f"Membership invoice for {plan.title}",
         externalCorrelationId=invoice_id,
-        metadata={
-            "exercise": "membership",
-            "planId": membership.plan_id,
-        },
+        metadata={"exercise": "membership", "planId": membership.plan_id},
     )
 
-    client_kwargs: dict[str, object] = {"base_url": external_invoice_provider_base_url}
-    if external_invoice_provider_base_url.startswith("http://testserver"):
-        client_kwargs["transport"] = httpx.ASGITransport(app=request.app)
-
-    async with httpx.AsyncClient(**client_kwargs) as client:
-        external_invoice_http_response = await client.post(
-            "/api/shared/external-invoice-provider/invoices",
-            json=json.loads(
-                external_invoice_request.model_dump_json(by_alias=True)
-                if hasattr(external_invoice_request, "model_dump_json")
-                else external_invoice_request.json(by_alias=True)
-            ),
-        )
-        external_invoice_http_response.raise_for_status()
-        external_invoice = (
-            ExternalInvoiceProviderResponse.model_validate(external_invoice_http_response.json())
-            if hasattr(ExternalInvoiceProviderResponse, "model_validate")
-            else ExternalInvoiceProviderResponse.parse_obj(external_invoice_http_response.json())
-        )
-
-    external_invoice_id = (
-        external_invoice.invoice_id if external_invoice is not None else invoice_id
+    external_invoice = await _create_external_invoice(
+        request,
+        external_invoice_provider_base_url,
+        external_invoice_request,
     )
+    external_invoice_id = external_invoice.invoice_id if external_invoice else invoice_id
 
     billing_reference = MembershipBillingReferenceOrmModel(
+        id=str(uuid4()),
         membership_id=membership.id,
         external_invoice_id=external_invoice_id,
         external_invoice_reference=invoice_id,
@@ -229,7 +165,7 @@ Codeartify Billing
     email_service.send(email)
 
     return ActivateMembershipResponse(
-        membershipId=membership.id,
+        membershipId=billing_reference.membership_id,
         customerId=membership.customer_id,
         planId=membership.plan_id,
         planPrice=membership.plan_price,
@@ -237,7 +173,27 @@ Codeartify Billing
         status=membership.status,
         startDate=membership.start_date,
         endDate=membership.end_date,
-        invoiceId=invoice_id,
-        externalInvoiceId=external_invoice_id,
-        invoiceDueDate=invoice_due_date,
+        invoiceId=billing_reference.external_invoice_reference,
+        externalInvoiceId=billing_reference.external_invoice_id,
+        invoiceDueDate=billing_reference.due_date,
     )
+
+
+async def _create_external_invoice(
+    request: Request,
+    external_invoice_provider_base_url: str,
+    external_invoice_request: ExternalInvoiceProviderUpsertRequest,
+) -> ExternalInvoiceProviderResponse | None:
+    client_kwargs: dict[str, object] = {"base_url": external_invoice_provider_base_url}
+    if external_invoice_provider_base_url.startswith("http://testserver"):
+        client_kwargs["transport"] = httpx.ASGITransport(app=request.app)
+
+    async with httpx.AsyncClient(**client_kwargs) as client:
+        external_invoice_http_response = await client.post(
+            "/api/shared/external-invoice-provider/invoices",
+            json=json.loads(external_invoice_request.model_dump_json(by_alias=True)),
+        )
+        external_invoice_http_response.raise_for_status()
+        return ExternalInvoiceProviderResponse.model_validate(
+            external_invoice_http_response.json()
+        )

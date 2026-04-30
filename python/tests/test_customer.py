@@ -5,8 +5,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from workshop_api.fitness import database
-from workshop_api.fitness.customer_entity import CustomerOrmModel
 from workshop_api.fitness.database import Base
+from workshop_api.fitness.shared.customer_entity import CustomerOrmModel
 from workshop_api.main import app
 
 
