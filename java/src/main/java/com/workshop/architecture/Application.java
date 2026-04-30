@@ -14,11 +14,3 @@ public class Application {
     }
 }
 
-@RestController
-class HealthController {
-
-    @GetMapping("/health")
-    Map<String, String> health() {
-        return Map.of("status", "ok");
-    }
-}
