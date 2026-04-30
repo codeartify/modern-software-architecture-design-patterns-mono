@@ -3,14 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
-class PlanUpsertRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    title: str
-    description: str
-    duration_in_months: int = Field(alias="durationInMonths")
-    price: Decimal
+from workshop_api.fitness.shared.plan_entity import PlanOrmModel
 
 
 class PlanResponse(BaseModel):
@@ -24,3 +17,13 @@ class PlanResponse(BaseModel):
         serialization_alias="durationInMonths",
     )
     price: Decimal
+
+    @staticmethod
+    def from_entity(entity: PlanOrmModel) -> PlanResponse:
+        return PlanResponse(
+            id=entity.id,
+            title=entity.title,
+            description=entity.description,
+            durationInMonths=entity.duration_in_months,
+            price=entity.price,
+        )
