@@ -26,6 +26,7 @@ public record Membership(
                                     int planDurationInMonths,
                                     BigDecimal planPrice) {
 
+        // DDD Invariant
         if (customer.isUnderageAt(startDate) && isMissingSignature(isSignedByCustodian)) {
             throw new CustomerTooYoungException(
                     "Customers younger than 18 require signedByCustodian=true"
