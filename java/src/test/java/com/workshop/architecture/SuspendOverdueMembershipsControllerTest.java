@@ -9,10 +9,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipBillingReferenceEntity;
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipBillingReferenceRepository;
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipEntity;
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipRepository;
+import com.workshop.architecture.fitness.shared.MembershipBillingReferenceEntity;
+import com.workshop.architecture.fitness.shared.MembershipBillingReferenceRepository;
+import com.workshop.architecture.fitness.shared.MembershipEntity;
+import com.workshop.architecture.fitness.shared.MembershipRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

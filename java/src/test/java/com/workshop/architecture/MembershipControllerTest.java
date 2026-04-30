@@ -1,15 +1,15 @@
 package com.workshop.architecture;
 
 import com.workshop.architecture.external_invoice_provider.InvoiceProviderStore;
-import com.workshop.architecture.fitness.managing_memberships.shared.InMemoryEmailService;
-import com.workshop.architecture.fitness.managing_memberships.activate_membership.ActivateMembershipResponse;
-import com.workshop.architecture.fitness.managing_memberships.get_membership.GetMembershipResponse;
-import com.workshop.architecture.fitness.managing_memberships.list_memberships.ListMembershipResponse;
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipBillingReferenceEntity;
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipBillingReferenceRepository;
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipEntity;
-import com.workshop.architecture.fitness.managing_memberships.shared.MembershipRepository;
-import com.workshop.architecture.fitness.managing_memberships.suspend_membership.SuspendOverdueMembershipsResponse;
+import com.workshop.architecture.fitness.shared.InMemoryEmailService;
+import com.workshop.architecture.fitness.activate_membership.ActivateMembershipResponse;
+import com.workshop.architecture.fitness.get_membership.GetMembershipResponse;
+import com.workshop.architecture.fitness.list_memberships.ListMembershipResponse;
+import com.workshop.architecture.fitness.shared.MembershipBillingReferenceEntity;
+import com.workshop.architecture.fitness.shared.MembershipBillingReferenceRepository;
+import com.workshop.architecture.fitness.shared.MembershipEntity;
+import com.workshop.architecture.fitness.shared.MembershipRepository;
+import com.workshop.architecture.fitness.suspend_membership.SuspendOverdueMembershipsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

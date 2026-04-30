@@ -1,8 +1,8 @@
 package com.workshop.architecture;
 
 import com.workshop.architecture.external_invoice_provider.InvoiceProviderStore;
-import com.workshop.architecture.fitness.managing_memberships.shared.ExternalInvoiceProviderStatus;
-import com.workshop.architecture.fitness.managing_memberships.shared.ExternalInvoiceProviderUpsertRequest;
+import com.workshop.architecture.fitness.shared.ExternalInvoiceProviderStatus;
+import com.workshop.architecture.fitness.shared.ExternalInvoiceProviderUpsertRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

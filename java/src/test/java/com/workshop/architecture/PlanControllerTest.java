@@ -11,9 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.workshop.architecture.fitness.managing_plans.shared.PlanEntity;
-import com.workshop.architecture.fitness.managing_plans.shared.PlanRepository;
-import com.workshop.architecture.fitness.managing_plans.shared.PlanUpsertRequest;
+import com.workshop.architecture.fitness.shared.PlanEntity;
+import com.workshop.architecture.fitness.shared.PlanRepository;
+import com.workshop.architecture.fitness.shared.PlanUpsertRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

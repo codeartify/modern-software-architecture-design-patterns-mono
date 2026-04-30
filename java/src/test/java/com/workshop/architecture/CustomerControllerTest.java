@@ -10,9 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.UUID;
 
-import com.workshop.architecture.fitness.managing_customers.shared.CustomerEntity;
-import com.workshop.architecture.fitness.managing_customers.shared.CustomerRepository;
-import com.workshop.architecture.fitness.managing_customers.shared.CustomerUpsertRequest;
+import com.workshop.architecture.fitness.shared.CustomerEntity;
+import com.workshop.architecture.fitness.shared.CustomerRepository;
+import com.workshop.architecture.fitness.shared.CustomerUpsertRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
