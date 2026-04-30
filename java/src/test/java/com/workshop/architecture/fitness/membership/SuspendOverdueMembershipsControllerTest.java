@@ -8,6 +8,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import com.workshop.architecture.fitness.membership.shared.MembershipBillingReferenceEntity;
+import com.workshop.architecture.fitness.membership.shared.MembershipBillingReferenceRepository;
+import com.workshop.architecture.fitness.membership.shared.MembershipEntity;
+import com.workshop.architecture.fitness.membership.shared.MembershipRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

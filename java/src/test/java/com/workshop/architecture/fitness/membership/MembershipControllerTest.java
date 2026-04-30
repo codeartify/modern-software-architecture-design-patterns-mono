@@ -10,6 +10,15 @@ import java.net.ServerSocket;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import com.workshop.architecture.fitness.membership.activate_membership.ActivateMembershipResponse;
+import com.workshop.architecture.fitness.membership.get_membership.GetMembershipResponse;
+import com.workshop.architecture.fitness.membership.list_memberships.ListMembershipResponse;
+import com.workshop.architecture.fitness.membership.shared.MembershipBillingReferenceEntity;
+import com.workshop.architecture.fitness.membership.shared.MembershipBillingReferenceRepository;
+import com.workshop.architecture.fitness.membership.shared.MembershipEntity;
+import com.workshop.architecture.fitness.membership.shared.MembershipRepository;
+import com.workshop.architecture.fitness.membership.suspend_membership.SuspendOverdueMembershipsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -162,21 +171,21 @@ class MembershipControllerTest {
                 .baseUrl("http://localhost:" + serverPort)
                 .build();
 
-        MembershipResponse[] response = client.get()
+        ListMembershipResponse[] response = client.get()
                 .uri(MEMBERSHIPS_BASE_PATH)
                 .retrieve()
-                .body(MembershipResponse[].class);
+                .body(ListMembershipResponse[].class);
 
         assertThat(response).isNotNull();
         assertThat(response).hasSize(2);
         assertThat(response)
-                .extracting(MembershipResponse::membershipId)
+                .extracting(ListMembershipResponse::membershipId)
                 .containsExactlyInAnyOrder(
                         activeMembership.getId().toString(),
                         suspendedMembership.getId().toString()
                 );
         assertThat(response)
-                .extracting(MembershipResponse::status)
+                .extracting(ListMembershipResponse::status)
                 .containsExactlyInAnyOrder("ACTIVE", "SUSPENDED");
     }
 
@@ -198,10 +207,10 @@ class MembershipControllerTest {
                 .baseUrl("http://localhost:" + serverPort)
                 .build();
 
-        MembershipResponse response = client.get()
+        GetMembershipResponse response = client.get()
                 .uri(MEMBERSHIPS_BASE_PATH + "/{membershipId}", membership.getId())
                 .retrieve()
-                .body(MembershipResponse.class);
+                .body(GetMembershipResponse.class);
 
         assertThat(response).isNotNull();
         assertThat(response.membershipId()).isEqualTo(membership.getId().toString());

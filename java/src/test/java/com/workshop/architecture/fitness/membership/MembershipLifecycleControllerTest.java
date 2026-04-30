@@ -10,6 +10,16 @@ import java.net.ServerSocket;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import com.workshop.architecture.fitness.membership.cancel_membership.CancelMembershipResponse;
+import com.workshop.architecture.fitness.membership.extend_membership.ExtendMembershipResponse;
+import com.workshop.architecture.fitness.membership.handle_payment_received.PaymentReceivedResponse;
+import com.workshop.architecture.fitness.membership.pause_membership.PauseMembershipResponse;
+import com.workshop.architecture.fitness.membership.resume_membership.ResumeMembershipResponse;
+import com.workshop.architecture.fitness.membership.shared.MembershipBillingReferenceEntity;
+import com.workshop.architecture.fitness.membership.shared.MembershipBillingReferenceRepository;
+import com.workshop.architecture.fitness.membership.shared.MembershipEntity;
+import com.workshop.architecture.fitness.membership.shared.MembershipRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
