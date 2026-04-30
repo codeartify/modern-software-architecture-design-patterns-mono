@@ -7,11 +7,11 @@ import com.workshop.architecture.fitness.layered.infrastructure.MembershipBillin
 import org.springframework.stereotype.Component;
 
 @Component
-public class BillingReferencesRepository implements ForStoringBillingReferences {
+public class JpaMembershipBillingReferencesRepository implements ForStoringBillingReferences {
 
     private final MembershipBillingReferenceRepository billingReferenceRepository;
 
-    public BillingReferencesRepository(MembershipBillingReferenceRepository billingReferenceRepository) {
+    public JpaMembershipBillingReferencesRepository(MembershipBillingReferenceRepository billingReferenceRepository) {
         this.billingReferenceRepository = billingReferenceRepository;
     }
 
