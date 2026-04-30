@@ -10,19 +10,19 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from workshop_api.fitness.customer.database import get_db_session
-from workshop_api.fitness.customer.models import CustomerOrmModel
-from workshop_api.fitness.email.service import email_service
-from workshop_api.fitness.external_invoice_provider.models import ExternalInvoiceProviderStatus
-from workshop_api.fitness.external_invoice_provider.schemas import (
+from workshop_api.fitness.customer_entity import CustomerOrmModel
+from workshop_api.fitness.database import get_db_session
+from workshop_api.fitness.in_memory_email_service import email_service
+from workshop_api.fitness.invoice_provider_schemas import (
     ExternalInvoiceProviderResponse,
     ExternalInvoiceProviderUpsertRequest,
 )
-from workshop_api.fitness.membership.models import (
+from workshop_api.fitness.invoice_provider_status import ExternalInvoiceProviderStatus
+from workshop_api.fitness.membership_entity import (
     MembershipBillingReferenceOrmModel,
     MembershipOrmModel,
 )
-from workshop_api.fitness.membership.schemas import (
+from workshop_api.fitness.membership_schemas import (
     ActivateMembershipRequest,
     ActivateMembershipResponse,
     CancelMembershipRequest,
@@ -39,7 +39,7 @@ from workshop_api.fitness.membership.schemas import (
     SuspendOverdueMembershipsRequest,
     SuspendOverdueMembershipsResponse,
 )
-from workshop_api.fitness.plan.models import PlanOrmModel
+from workshop_api.fitness.plan_entity import PlanOrmModel
 
 router = APIRouter(prefix="/api/memberships", tags=["membership"])
 

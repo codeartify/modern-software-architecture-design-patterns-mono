@@ -2,8 +2,8 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from workshop_api.fitness.customer.models import CustomerOrmModel
-from workshop_api.fitness.customer.schemas import CustomerResponse, CustomerUpsertRequest
+from workshop_api.fitness.customer_entity import CustomerOrmModel
+from workshop_api.fitness.customer_schemas import CustomerResponse, CustomerUpsertRequest
 from workshop_api.fitness.errors import NotFoundError
 
 

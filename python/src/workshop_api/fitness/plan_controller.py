@@ -3,10 +3,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
-from workshop_api.fitness.customer.database import get_db_session
+from workshop_api.fitness.database import get_db_session
 from workshop_api.fitness.errors import NotFoundError
-from workshop_api.fitness.plan.schemas import PlanResponse, PlanUpsertRequest
-from workshop_api.fitness.plan.service import PlanService
+from workshop_api.fitness.plan_schemas import PlanResponse, PlanUpsertRequest
+from workshop_api.fitness.plan_service import PlanService
 
 router = APIRouter(prefix="/api/plans", tags=["plan"])
 
