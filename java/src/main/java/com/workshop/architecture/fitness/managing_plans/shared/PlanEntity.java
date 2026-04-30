@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.managing_plans;
+package com.workshop.architecture.fitness.managing_plans.shared;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,11 +1,11 @@
 package com.workshop.architecture.fitness.managing_memberships.activate_membership;
 
-import com.workshop.architecture.fitness.managing_customers.CustomerEntity;
-import com.workshop.architecture.fitness.managing_customers.CustomerRepository;
+import com.workshop.architecture.fitness.managing_customers.shared.CustomerEntity;
+import com.workshop.architecture.fitness.managing_customers.shared.CustomerRepository;
 import com.workshop.architecture.fitness.managing_memberships.shared.InMemoryEmailService;
 import com.workshop.architecture.fitness.managing_memberships.shared.*;
-import com.workshop.architecture.fitness.managing_plans.PlanEntity;
-import com.workshop.architecture.fitness.managing_plans.PlanRepository;
+import com.workshop.architecture.fitness.managing_plans.shared.PlanEntity;
+import com.workshop.architecture.fitness.managing_plans.shared.PlanRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;

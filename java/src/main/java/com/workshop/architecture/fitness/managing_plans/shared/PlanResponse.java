@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.managing_plans;
+package com.workshop.architecture.fitness.managing_plans.shared;
 
 import java.math.BigDecimal;
 import java.util.UUID;

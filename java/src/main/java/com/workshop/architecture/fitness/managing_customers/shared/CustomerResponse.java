@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.managing_customers;
+package com.workshop.architecture.fitness.managing_customers.shared;
 
 import java.time.LocalDate;
 import java.util.UUID;

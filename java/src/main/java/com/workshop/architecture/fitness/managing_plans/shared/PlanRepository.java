@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.managing_plans;
+package com.workshop.architecture.fitness.managing_plans.shared;
 
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

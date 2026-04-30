@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.managing_customers;
+package com.workshop.architecture.fitness.managing_customers.shared;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

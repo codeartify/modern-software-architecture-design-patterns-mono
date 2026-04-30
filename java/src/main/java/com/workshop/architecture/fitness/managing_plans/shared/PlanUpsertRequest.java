@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.managing_plans;
+package com.workshop.architecture.fitness.managing_plans.shared;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
