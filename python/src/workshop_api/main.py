@@ -4,15 +4,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from workshop_api.fitness.customer.database import init_db
-from workshop_api.fitness.customer.router import router as customer_router
-from workshop_api.fitness.external_invoice_provider.router import (
+from workshop_api.external_invoice_provider.invoice_provider_controller import (
     router as external_invoice_provider_router,
 )
-from workshop_api.fitness.membership.router import (
+from workshop_api.fitness.customer_controller import router as customer_router
+from workshop_api.fitness.database import init_db
+from workshop_api.fitness.membership_controller import (
     router as membership_router,
 )
-from workshop_api.fitness.plan.router import router as plan_router
+from workshop_api.fitness.plan_controller import router as plan_router
 
 app = FastAPI(title="Architecture Python API")
 init_db()
