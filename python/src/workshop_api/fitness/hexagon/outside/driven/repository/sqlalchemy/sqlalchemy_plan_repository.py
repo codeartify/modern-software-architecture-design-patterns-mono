@@ -10,7 +10,7 @@ from workshop_api.fitness.hexagon.inside.port.outbound.plan_not_found_exception 
 from workshop_api.fitness.layered.infrastructure.plan_repository import PlanRepository
 
 
-class JpaPlanRepository(ForFindingPlans):
+class SqlAlchemyPlanRepository(ForFindingPlans):
     def __init__(self, plan_repository: PlanRepository) -> None:
         self.plan_repository = plan_repository
 

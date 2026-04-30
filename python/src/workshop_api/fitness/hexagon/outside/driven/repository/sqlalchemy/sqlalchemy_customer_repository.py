@@ -10,7 +10,7 @@ from workshop_api.fitness.hexagon.inside.port.outbound.for_finding_customers imp
 from workshop_api.fitness.layered.infrastructure.customer_repository import CustomerRepository
 
 
-class JpaCustomerRepository(ForFindingCustomers):
+class SqlAlchemyCustomerRepository(ForFindingCustomers):
     def __init__(self, customer_repository: CustomerRepository) -> None:
         self.customer_repository = customer_repository
 
