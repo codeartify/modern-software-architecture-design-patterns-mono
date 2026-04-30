@@ -1,18 +1,20 @@
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
-from workshop_api.fitness.customer_entity import CustomerOrmModel
-from workshop_api.fitness.customer_schemas import CustomerResponse, CustomerUpsertRequest
-from workshop_api.fitness.errors import NotFoundError
+from workshop_api.fitness.business.application.errors import NotFoundError
+from workshop_api.fitness.infrastructure.customer_entity import CustomerOrmModel
+from workshop_api.fitness.infrastructure.customer_repository import CustomerRepository
+from workshop_api.fitness.presentation.customer_schemas import (
+    CustomerResponse,
+    CustomerUpsertRequest,
+)
 
 
 class CustomerService:
-    def __init__(self, session: Session) -> None:
-        self.session = session
+    def __init__(self, repository: CustomerRepository) -> None:
+        self.repository = repository
 
     def list_customers(self) -> list[CustomerResponse]:
-        customers = self.session.query(CustomerOrmModel).order_by(CustomerOrmModel.name).all()
+        customers = sorted(self.repository.find_all(), key=lambda customer: customer.name)
         return [self._to_response(customer) for customer in customers]
 
     def get_customer(self, customer_id: UUID) -> CustomerResponse:
@@ -24,10 +26,7 @@ class CustomerService:
             date_of_birth=request.date_of_birth,
             email_address=str(request.email_address),
         )
-        self.session.add(customer)
-        self.session.commit()
-        self.session.refresh(customer)
-        return self._to_response(customer)
+        return self._to_response(self.repository.save(customer))
 
     def update_customer(
         self,
@@ -38,17 +37,14 @@ class CustomerService:
         customer.name = request.name
         customer.date_of_birth = request.date_of_birth
         customer.email_address = str(request.email_address)
-        self.session.commit()
-        self.session.refresh(customer)
-        return self._to_response(customer)
+        return self._to_response(self.repository.save(customer))
 
     def delete_customer(self, customer_id: UUID) -> None:
         customer = self._load_customer(customer_id)
-        self.session.delete(customer)
-        self.session.commit()
+        self.repository.delete(customer)
 
     def _load_customer(self, customer_id: UUID) -> CustomerOrmModel:
-        customer = self.session.get(CustomerOrmModel, str(customer_id))
+        customer = self.repository.find_by_id(customer_id)
         if customer is None:
             raise NotFoundError(f"Customer {customer_id} was not found")
         return customer
