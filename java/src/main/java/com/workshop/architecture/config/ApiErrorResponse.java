@@ -1,4 +1,4 @@
-package com.workshop.architecture;
+package com.workshop.architecture.config;
 
 public record ApiErrorResponse(
         int status,

@@ -1,8 +1,8 @@
-package com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider;
+package com.workshop.architecture.external_invoice_provider;
 
 import java.time.Instant;
 
-public record ExternalInvoiceProviderPaymentReceivedCallbackRequest(
+public record InvoiceProviderPaymentReceivedCallbackRequest(
         String externalInvoiceId,
         String externalInvoiceReference,
         String membershipId,

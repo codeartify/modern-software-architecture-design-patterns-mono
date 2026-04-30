@@ -1,20 +1,12 @@
-package com.workshop.architecture.fitness.membership;
+package com.workshop.architecture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
+import com.workshop.architecture.external_invoice_provider.InvoiceProviderStore;
+import com.workshop.architecture.fitness.hexagon.outside.driver.ActivateMembershipResponse;
+import com.workshop.architecture.fitness.hexagon.outside.driver.MembershipResponse;
 import com.workshop.architecture.fitness.layered.infrastructure.InMemoryEmailService;
-import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderStore;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.time.LocalDate;
-import java.util.UUID;
-
 import com.workshop.architecture.fitness.layered.infrastructure.MembershipBillingReferenceRepository;
 import com.workshop.architecture.fitness.layered.infrastructure.MembershipEntity;
 import com.workshop.architecture.fitness.layered.infrastructure.MembershipRepository;
-import com.workshop.architecture.fitness.hexagon.outside.driver.ActivateMembershipResponse;
-import com.workshop.architecture.fitness.hexagon.outside.driver.MembershipResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +17,14 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.time.LocalDate;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class MembershipControllerTest {
@@ -50,7 +50,7 @@ class MembershipControllerTest {
     private MembershipBillingReferenceRepository billingReferenceRepository;
 
     @Autowired
-    private ExternalInvoiceProviderStore externalInvoiceProviderStore;
+    private InvoiceProviderStore invoiceProviderStore;
 
     @Autowired
     private InMemoryEmailService emailService;
@@ -59,7 +59,7 @@ class MembershipControllerTest {
     void clearState() {
         membershipRepository.deleteAll();
         billingReferenceRepository.deleteAll();
-        externalInvoiceProviderStore.clear();
+        invoiceProviderStore.clear();
         emailService.clear();
     }
 
@@ -89,8 +89,8 @@ class MembershipControllerTest {
         assertThat(response.startDate()).isNotNull();
         assertThat(response.endDate()).isEqualTo(response.startDate().plusMonths(12));
         assertThat(membershipRepository.findAll()).hasSize(1);
-        assertThat(externalInvoiceProviderStore.findAll()).hasSize(1);
-        assertThat(externalInvoiceProviderStore.findAll().getFirst().contractReference())
+        assertThat(invoiceProviderStore.findAll()).hasSize(1);
+        assertThat(invoiceProviderStore.findAll().getFirst().contractReference())
                 .isEqualTo(response.membershipId());
         assertThat(billingReferenceRepository.findAll()).hasSize(1);
         assertThat(billingReferenceRepository.findAll().getFirst().getMembershipId())
@@ -134,7 +134,7 @@ class MembershipControllerTest {
 
         assertThat(membershipRepository.findAll()).isEmpty();
         assertThat(billingReferenceRepository.findAll()).isEmpty();
-        assertThat(externalInvoiceProviderStore.findAll()).isEmpty();
+        assertThat(invoiceProviderStore.findAll()).isEmpty();
         assertThat(emailService.sentEmails()).isEmpty();
     }
 

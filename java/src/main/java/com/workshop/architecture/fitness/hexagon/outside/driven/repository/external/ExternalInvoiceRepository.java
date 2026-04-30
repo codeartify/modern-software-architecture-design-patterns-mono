@@ -2,9 +2,6 @@ package com.workshop.architecture.fitness.hexagon.outside.driven.repository.exte
 
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.ForCreatingInvoices;
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.MembershipInvoiceDetails;
-import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderResponse;
-import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderStatus;
-import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
