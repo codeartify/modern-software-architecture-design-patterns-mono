@@ -21,7 +21,6 @@ class ActivateMembershipResponse(BaseModel):
     plan_price: int = Field(alias="planPrice", serialization_alias="planPrice")
     plan_duration: int = Field(alias="planDuration", serialization_alias="planDuration")
     status: str
-    reason: str | None = None
     start_date: date = Field(alias="startDate", serialization_alias="startDate")
     end_date: date = Field(alias="endDate", serialization_alias="endDate")
     invoice_id: UUID = Field(alias="invoiceId", serialization_alias="invoiceId")
