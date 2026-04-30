@@ -1,19 +1,8 @@
 package com.workshop.architecture;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.time.LocalDate;
-import java.util.Map;
-
-import com.workshop.architecture.fitness.ExternalInvoiceProviderStatus;
+import com.workshop.architecture.external_invoice_provider.InvoiceProviderStatus;
 import com.workshop.architecture.external_invoice_provider.InvoiceProviderStore;
-import com.workshop.architecture.fitness.ExternalInvoiceProviderUpsertRequest;
+import com.workshop.architecture.external_invoice_provider.InvoiceProviderUpsertRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +15,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import tools.jackson.databind.ObjectMapper;
+
+import java.time.LocalDate;
+import java.util.Map;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 class InvoiceProviderControllerTest {
@@ -58,13 +53,13 @@ class InvoiceProviderControllerTest {
 
     @Test
     void createsReadsUpdatesAndDeletesExternalInvoices() throws Exception {
-        String createPayload = objectMapper.writeValueAsString(new ExternalInvoiceProviderUpsertRequest(
+        String createPayload = objectMapper.writeValueAsString(new InvoiceProviderUpsertRequest(
                 "customer-adult-1",
                 "membership-001",
                 99900,
                 "CHF",
                 LocalDate.parse("2026-05-27"),
-                ExternalInvoiceProviderStatus.OPEN,
+                InvoiceProviderStatus.OPEN,
                 "Annual membership invoice",
                 "activation-123",
                 Map.of("origin", "fitness-system")
@@ -91,13 +86,13 @@ class InvoiceProviderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.invoiceId").value(invoiceId));
 
-        String updatePayload = objectMapper.writeValueAsString(new ExternalInvoiceProviderUpsertRequest(
+        String updatePayload = objectMapper.writeValueAsString(new InvoiceProviderUpsertRequest(
                 "customer-adult-1",
                 "membership-001",
                 99900,
                 "CHF",
                 LocalDate.parse("2026-05-27"),
-                ExternalInvoiceProviderStatus.PAID,
+                InvoiceProviderStatus.PAID,
                 "Annual membership invoice paid",
                 "payment-456",
                 Map.of("origin", "fitness-system", "paymentReference", "pay-123")
@@ -123,13 +118,13 @@ class InvoiceProviderControllerTest {
 
     @Test
     void marksOpenInvoiceAsPaidAndTriggersMembershipCallbackOnlyOnce() throws Exception {
-        String createPayload = objectMapper.writeValueAsString(new ExternalInvoiceProviderUpsertRequest(
+        String createPayload = objectMapper.writeValueAsString(new InvoiceProviderUpsertRequest(
                 "customer-adult-1",
                 "membership-001",
                 99900,
                 "CHF",
                 LocalDate.parse("2026-05-27"),
-                ExternalInvoiceProviderStatus.OPEN,
+                InvoiceProviderStatus.OPEN,
                 "Annual membership invoice",
                 "activation-123",
                 Map.of("origin", "fitness-system")

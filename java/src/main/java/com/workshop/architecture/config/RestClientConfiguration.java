@@ -1,4 +1,4 @@
-package com.workshop.architecture;
+package com.workshop.architecture.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,7 +8,7 @@ import org.springframework.web.client.RestClient;
 public class RestClientConfiguration {
 
     @Bean
-    RestClient.Builder restClientBuilder() {
+    public RestClient.Builder restClientBuilder() {
         return RestClient.builder();
     }
 }

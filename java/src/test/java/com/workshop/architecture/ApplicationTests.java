@@ -3,6 +3,8 @@ package com.workshop.architecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
+
+import com.workshop.architecture.config.HealthController;
 import org.junit.jupiter.api.Test;
 
 class ApplicationTests {
