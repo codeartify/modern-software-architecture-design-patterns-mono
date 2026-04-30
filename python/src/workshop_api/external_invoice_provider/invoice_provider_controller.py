@@ -6,39 +6,42 @@ from datetime import UTC, datetime
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
-from workshop_api.fitness.errors import NotFoundError
-from workshop_api.fitness.external_invoice_provider.models import ExternalInvoiceProviderStatus
-from workshop_api.fitness.external_invoice_provider.schemas import (
-    ExternalInvoiceProviderPaymentReceivedCallbackRequest,
-    ExternalInvoiceProviderResponse,
-    ExternalInvoiceProviderUpsertRequest,
+from workshop_api.external_invoice_provider.invoice_provider_schemas import (
+    InvoiceProviderPaymentReceivedCallbackRequest,
+    InvoiceProviderResponse,
+    InvoiceProviderUpsertRequest,
 )
-from workshop_api.fitness.external_invoice_provider.store import ExternalInvoiceProviderStore
+from workshop_api.external_invoice_provider.invoice_provider_status import (
+    InvoiceProviderStatus,
+)
+from workshop_api.external_invoice_provider.invoice_provider_store import (
+    InvoiceProviderStore,
+)
 
 router = APIRouter(
     prefix="/api/shared/external-invoice-provider/invoices",
     tags=["external-invoice-provider"],
 )
 
-store = ExternalInvoiceProviderStore()
+store = InvoiceProviderStore()
 
 
 def get_fitness_api_base_url() -> str:
     return os.getenv("WORKSHOP_FITNESS_API_BASE_URL", "http://127.0.0.1:9090")
 
 
-@router.get("", response_model=list[ExternalInvoiceProviderResponse], response_model_by_alias=True)
-def list_invoices() -> list[ExternalInvoiceProviderResponse]:
-    return store.list_invoices()
+@router.get("", response_model=list[InvoiceProviderResponse], response_model_by_alias=True)
+def list_invoices() -> list[InvoiceProviderResponse]:
+    return store.find_all()
 
 
 @router.get(
     "/{invoice_id}",
-    response_model=ExternalInvoiceProviderResponse,
+    response_model=InvoiceProviderResponse,
     response_model_by_alias=True,
 )
-def get_invoice(invoice_id: str) -> ExternalInvoiceProviderResponse:
-    invoice = store.get_invoice(invoice_id)
+def get_invoice(invoice_id: str) -> InvoiceProviderResponse:
+    invoice = store.find_by_id(invoice_id)
     if invoice is None:
         raise _not_found(invoice_id)
     return invoice
@@ -46,14 +49,14 @@ def get_invoice(invoice_id: str) -> ExternalInvoiceProviderResponse:
 
 @router.post(
     "",
-    response_model=ExternalInvoiceProviderResponse,
+    response_model=InvoiceProviderResponse,
     response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
 )
 def create_invoice(
-    request: ExternalInvoiceProviderUpsertRequest,
+    request: InvoiceProviderUpsertRequest,
     response: Response,
-) -> ExternalInvoiceProviderResponse:
+) -> InvoiceProviderResponse:
     invoice_id = str(uuid.uuid4())
     created = store.save(invoice_id, request)
     response.headers["Location"] = f"/api/shared/external-invoice-provider/invoices/{invoice_id}"
@@ -62,37 +65,37 @@ def create_invoice(
 
 @router.post(
     "/{invoice_id}/mark-paid",
-    response_model=ExternalInvoiceProviderResponse,
+    response_model=InvoiceProviderResponse,
     response_model_by_alias=True,
 )
 async def mark_invoice_paid(
     invoice_id: str,
     request: Request,
     fitness_api_base_url: str = Depends(get_fitness_api_base_url),
-) -> ExternalInvoiceProviderResponse:
-    invoice = store.get_invoice(invoice_id)
+) -> InvoiceProviderResponse:
+    invoice = store.find_by_id(invoice_id)
     if invoice is None:
         raise _not_found(invoice_id)
 
-    if invoice.status == ExternalInvoiceProviderStatus.PAID:
+    if invoice.status == InvoiceProviderStatus.PAID:
         return invoice
 
     paid_invoice = store.save_response(
-        ExternalInvoiceProviderResponse(
+        InvoiceProviderResponse(
             invoiceId=invoice.invoice_id,
             customerReference=invoice.customer_reference,
             contractReference=invoice.contract_reference,
             amountInCents=invoice.amount_in_cents,
             currency=invoice.currency,
             dueDate=invoice.due_date,
-            status=ExternalInvoiceProviderStatus.PAID,
+            status=InvoiceProviderStatus.PAID,
             description=invoice.description,
             externalCorrelationId=invoice.external_correlation_id,
             metadata=invoice.metadata,
         )
     )
 
-    callback_request = ExternalInvoiceProviderPaymentReceivedCallbackRequest(
+    callback_request = InvoiceProviderPaymentReceivedCallbackRequest(
         externalInvoiceId=paid_invoice.invoice_id,
         externalInvoiceReference=paid_invoice.external_correlation_id,
         membershipId=paid_invoice.contract_reference,
@@ -120,26 +123,28 @@ async def mark_invoice_paid(
 
 @router.put(
     "/{invoice_id}",
-    response_model=ExternalInvoiceProviderResponse,
+    response_model=InvoiceProviderResponse,
     response_model_by_alias=True,
 )
 def update_invoice(
     invoice_id: str,
-    request: ExternalInvoiceProviderUpsertRequest,
-) -> ExternalInvoiceProviderResponse:
-    if store.get_invoice(invoice_id) is None:
+    request: InvoiceProviderUpsertRequest,
+) -> InvoiceProviderResponse:
+    if store.find_by_id(invoice_id) is None:
         raise _not_found(invoice_id)
     return store.save(invoice_id, request)
 
 
 @router.delete("/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_invoice(invoice_id: str) -> Response:
-    if store.get_invoice(invoice_id) is None:
+    if store.find_by_id(invoice_id) is None:
         raise _not_found(invoice_id)
     store.delete(invoice_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 def _not_found(invoice_id: str) -> HTTPException:
-    error = NotFoundError(f"External invoice {invoice_id} was not found")
-    return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"External invoice {invoice_id} was not found",
+    )
