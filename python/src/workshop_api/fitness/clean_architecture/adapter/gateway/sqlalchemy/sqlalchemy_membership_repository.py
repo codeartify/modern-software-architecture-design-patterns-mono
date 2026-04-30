@@ -5,7 +5,17 @@ from workshop_api.fitness.layered.infrastructure.membership_repository import (
     MembershipRepository,
 )
 
-from ....entity import Membership
+from ....entity import (
+    CustomerId,
+    Duration,
+    Membership,
+    MembershipId,
+    MembershipStatus,
+    MembershipStatusValue,
+    PlanDetails,
+    PlanId,
+    Price,
+)
 from ....use_case.port.outbound import (
     ForStoringMemberships,
 )
@@ -31,13 +41,15 @@ class SqlAlchemyMembershipRepository(ForStoringMemberships):
         stored_entity = self.membership_repository.save(entity)
 
         return Membership(
-            id=uuid.UUID(stored_entity.id),
-            customer_id=uuid.UUID(stored_entity.customer_id),
-            plan_id=uuid.UUID(stored_entity.plan_id),
-            plan_price=stored_entity.plan_price,
-            plan_duration_in_months=stored_entity.plan_duration,
-            status=stored_entity.status,
-            status_reason=stored_entity.reason,
-            start_date=stored_entity.start_date,
-            end_date=stored_entity.end_date,
+            id=MembershipId(uuid.UUID(stored_entity.id)),
+            customer_id=CustomerId(uuid.UUID(stored_entity.customer_id)),
+            status=MembershipStatus(
+                MembershipStatusValue(stored_entity.status.upper()),
+                stored_entity.reason,
+            ),
+            plan_details=PlanDetails(
+                PlanId(uuid.UUID(stored_entity.plan_id)),
+                Price(stored_entity.plan_price),
+                Duration(stored_entity.start_date, stored_entity.end_date),
+            ),
         )

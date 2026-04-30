@@ -6,19 +6,34 @@ from uuid import UUID
 
 from ..use_case.exception import CustomerTooYoungException
 from .customer import Customer
+from .customer_id import CustomerId
+from .duration import Duration
+from .membership_id import MembershipId
+from .membership_status import MembershipStatus
+from .membership_status_value import MembershipStatusValue
+from .plan_details import PlanDetails
+from .plan_id import PlanId
+from .price import Price
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class Membership:
-    id: UUID
-    customer_id: UUID
-    plan_id: UUID
-    plan_price: int
-    plan_duration_in_months: int
-    status: str
-    status_reason: str | None
-    start_date: date
-    end_date: date
+    _id: MembershipId
+    _customer_id: CustomerId
+    _status: MembershipStatus
+    _plan_details: PlanDetails
+
+    def __init__(
+        self,
+        id: MembershipId,
+        customer_id: CustomerId,
+        status: MembershipStatus,
+        plan_details: PlanDetails,
+    ) -> None:
+        object.__setattr__(self, "_id", id)
+        object.__setattr__(self, "_customer_id", customer_id)
+        object.__setattr__(self, "_status", status)
+        object.__setattr__(self, "_plan_details", plan_details)
 
     @staticmethod
     def create(
@@ -37,16 +52,51 @@ class Membership:
         end_date = Membership._plus_months(start_date, plan_duration_in_months)
 
         return Membership(
-            id=uuid.uuid4(),
-            customer_id=customer.id,
-            plan_id=plan_id,
-            plan_price=int(plan_price),
-            plan_duration_in_months=plan_duration_in_months,
-            status="ACTIVE",
-            status_reason=None,
-            start_date=start_date,
-            end_date=end_date,
+            id=MembershipId(uuid.uuid4()),
+            customer_id=CustomerId(customer.id),
+            status=MembershipStatus(MembershipStatusValue.ACTIVE, None),
+            plan_details=PlanDetails(
+                PlanId(plan_id),
+                Price(int(plan_price)),
+                Duration(start_date, end_date),
+            ),
         )
+
+    @property
+    def id(self) -> UUID:
+        return self._id.id
+
+    @property
+    def customer_id(self) -> UUID:
+        return self._customer_id.id
+
+    @property
+    def plan_id(self) -> UUID:
+        return self._plan_details.plan_id.id
+
+    @property
+    def plan_price(self) -> int:
+        return self._plan_details.plan_price
+
+    @property
+    def plan_duration_in_months(self) -> int:
+        return self._plan_details.plan_duration_in_months
+
+    @property
+    def status(self) -> str:
+        return self._status.value.value
+
+    @property
+    def status_reason(self) -> str | None:
+        return self._status.reason
+
+    @property
+    def start_date(self) -> date:
+        return self._plan_details.start_date
+
+    @property
+    def end_date(self) -> date:
+        return self._plan_details.end_date
 
     @staticmethod
     def _plus_months(start_date: date, months: int) -> date:
