@@ -7,12 +7,12 @@ from fastapi.responses import JSONResponse
 from workshop_api.external_invoice_provider.invoice_provider_controller import (
     router as external_invoice_provider_router,
 )
-from workshop_api.fitness.infrastructure.database import init_db
-from workshop_api.fitness.presentation.customer_controller import router as customer_router
-from workshop_api.fitness.presentation.membership_controller import (
+from workshop_api.fitness.hexagon.outside.driver.membership_controller import (
     router as membership_router,
 )
-from workshop_api.fitness.presentation.plan_controller import router as plan_router
+from workshop_api.fitness.layered.infrastructure.database import init_db
+from workshop_api.fitness.layered.presentation.customer_controller import router as customer_router
+from workshop_api.fitness.layered.presentation.plan_controller import router as plan_router
 
 app = FastAPI(title="Architecture Python API")
 init_db()

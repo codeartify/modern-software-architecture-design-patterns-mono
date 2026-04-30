@@ -4,14 +4,14 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from workshop_api.fitness.infrastructure import database
-from workshop_api.fitness.infrastructure.customer_entity import CustomerOrmModel
-from workshop_api.fitness.infrastructure.database import Base
-from workshop_api.fitness.infrastructure.membership_entity import (
+from workshop_api.fitness.layered.infrastructure import database
+from workshop_api.fitness.layered.infrastructure.customer_entity import CustomerOrmModel
+from workshop_api.fitness.layered.infrastructure.database import Base
+from workshop_api.fitness.layered.infrastructure.membership_entity import (
     MembershipBillingReferenceOrmModel,
     MembershipOrmModel,
 )
-from workshop_api.fitness.infrastructure.plan_entity import PlanOrmModel
+from workshop_api.fitness.layered.infrastructure.plan_entity import PlanOrmModel
 
 
 def test_seed_demo_data_populates_expected_workshop_records(tmp_path: Path, monkeypatch) -> None:
