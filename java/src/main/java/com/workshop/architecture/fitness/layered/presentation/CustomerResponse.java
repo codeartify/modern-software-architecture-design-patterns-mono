@@ -1,5 +1,6 @@
 package com.workshop.architecture.fitness.layered.presentation;
 
+
 import com.workshop.architecture.fitness.layered.infrastructure.CustomerEntity;
 
 import java.time.LocalDate;

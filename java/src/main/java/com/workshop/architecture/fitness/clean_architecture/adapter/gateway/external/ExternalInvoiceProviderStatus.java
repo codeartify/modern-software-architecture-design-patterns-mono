@@ -1,4 +1,4 @@
-package com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider;
+package com.workshop.architecture.fitness.clean_architecture.adapter.gateway.external;
 
 public enum ExternalInvoiceProviderStatus {
     DRAFT,

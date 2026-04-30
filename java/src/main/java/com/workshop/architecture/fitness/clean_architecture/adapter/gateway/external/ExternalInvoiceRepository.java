@@ -2,9 +2,6 @@ package com.workshop.architecture.fitness.clean_architecture.adapter.gateway.ext
 
 import com.workshop.architecture.fitness.clean_architecture.entity.MembershipInvoiceDetails;
 import com.workshop.architecture.fitness.clean_architecture.use_case.port.outbound.ForCreatingInvoices;
-import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderResponse;
-import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderStatus;
-import com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider.ExternalInvoiceProviderUpsertRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -13,11 +10,11 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 
 @Component
-public class ExternalInvoiceProviderClient implements ForCreatingInvoices {
+public class ExternalInvoiceRepository implements ForCreatingInvoices {
 
     private final RestClient restClient;
 
-    public ExternalInvoiceProviderClient(
+    public ExternalInvoiceRepository(
             RestClient.Builder restClientBuilder,
             @Value("${workshop.external-invoice-provider.base-url}") String baseUrl
     ) {

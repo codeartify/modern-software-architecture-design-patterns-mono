@@ -1,16 +1,16 @@
-package com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider;
+package com.workshop.architecture.external_invoice_provider;
 
 import java.time.LocalDate;
 import java.util.Map;
 
-public record ExternalInvoiceProviderResponse(
+public record InvoiceProviderResponse(
         String invoiceId,
         String customerReference,
         String contractReference,
         int amountInCents,
         String currency,
         LocalDate dueDate,
-        ExternalInvoiceProviderStatus status,
+        InvoiceProviderStatus status,
         String description,
         String externalCorrelationId,
         Map<String, String> metadata

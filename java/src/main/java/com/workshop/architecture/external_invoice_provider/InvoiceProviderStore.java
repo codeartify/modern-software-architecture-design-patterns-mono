@@ -1,27 +1,24 @@
-package com.workshop.architecture.fitness.layered.infrastructure.external_invoice_provider;
+package com.workshop.architecture.external_invoice_provider;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.springframework.stereotype.Component;
 
+import java.util.*;
+
 @Component
-public class ExternalInvoiceProviderStore {
+public class InvoiceProviderStore {
 
-    private final Map<String, ExternalInvoiceProviderResponse> invoices = new LinkedHashMap<>();
+    private final Map<String, InvoiceProviderResponse> invoices = new LinkedHashMap<>();
 
-    public List<ExternalInvoiceProviderResponse> findAll() {
+    public List<InvoiceProviderResponse> findAll() {
         return new ArrayList<>(invoices.values());
     }
 
-    public Optional<ExternalInvoiceProviderResponse> findById(String invoiceId) {
+    public Optional<InvoiceProviderResponse> findById(String invoiceId) {
         return Optional.ofNullable(invoices.get(invoiceId));
     }
 
-    public ExternalInvoiceProviderResponse save(String invoiceId, ExternalInvoiceProviderUpsertRequest request) {
-        ExternalInvoiceProviderResponse response = new ExternalInvoiceProviderResponse(
+    public InvoiceProviderResponse save(String invoiceId, InvoiceProviderUpsertRequest request) {
+        InvoiceProviderResponse response = new InvoiceProviderResponse(
                 invoiceId,
                 request.customerReference(),
                 request.contractReference(),
@@ -37,7 +34,7 @@ public class ExternalInvoiceProviderStore {
         return response;
     }
 
-    public ExternalInvoiceProviderResponse save(ExternalInvoiceProviderResponse response) {
+    public InvoiceProviderResponse save(InvoiceProviderResponse response) {
         invoices.put(response.invoiceId(), response);
         return response;
     }
