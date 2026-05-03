@@ -5,6 +5,10 @@ Monorepo for a workshop that keeps the same application shape in two stacks:
 - `java/`: Java 21, Spring Boot, Maven
 - `python/`: Python 3.14, FastAPI, `uv` with `pyproject.toml`
 
+## License
+
+This workshop repository is provided under the [Codeartify Workshop License Agreement](./LICENSE.md).
+
 ## Structure
 
 ```text
