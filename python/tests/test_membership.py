@@ -155,6 +155,107 @@ def test_membership_activate_membership_rejects_minor_without_custodian_signatur
     app.dependency_overrides.clear()
 
 
+def test_membership_activate_membership_returns_404_when_customer_does_not_exist(
+    tmp_path: Path, monkeypatch
+) -> None:
+    test_sessionmaker = _membership_test_sessionmaker(
+        tmp_path,
+        "membership-missing-customer-test.db",
+        [
+            CustomerOrmModel.__table__,
+            PlanOrmModel.__table__,
+            MembershipOrmModel.__table__,
+            MembershipBillingReferenceOrmModel.__table__,
+        ],
+    )
+    setup_session = test_sessionmaker()
+    setup_session.add(
+        PlanOrmModel(
+            id="aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+            title="Premium 12 Months",
+            description="Twelve months for regular training",
+            duration_in_months=12,
+            price=Decimal("999.00"),
+        )
+    )
+    setup_session.commit()
+    setup_session.close()
+
+    client = _membership_test_client(test_sessionmaker, monkeypatch)
+
+    response = client.post(
+        f"{MEMBERSHIPS_BASE_PATH}/activate",
+        json={
+            "customerId": "11111111-1111-1111-1111-111111111111",
+            "planId": "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+            "signedByCustodian": False,
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["message"] == (
+        "Customer 11111111-1111-1111-1111-111111111111 was not found"
+    )
+    assert external_invoice_store.find_all() == []
+    assert email_service.sent_emails() == []
+
+    verification_session = test_sessionmaker()
+    assert verification_session.query(MembershipOrmModel).count() == 0
+    assert verification_session.query(MembershipBillingReferenceOrmModel).count() == 0
+    verification_session.close()
+    app.dependency_overrides.clear()
+
+
+def test_membership_activate_membership_returns_404_when_plan_does_not_exist(
+    tmp_path: Path, monkeypatch
+) -> None:
+    test_sessionmaker = _membership_test_sessionmaker(
+        tmp_path,
+        "membership-missing-plan-test.db",
+        [
+            CustomerOrmModel.__table__,
+            PlanOrmModel.__table__,
+            MembershipOrmModel.__table__,
+            MembershipBillingReferenceOrmModel.__table__,
+        ],
+    )
+    setup_session = test_sessionmaker()
+    setup_session.add(
+        CustomerOrmModel(
+            id="11111111-1111-1111-1111-111111111111",
+            name="Alice Active",
+            date_of_birth=date(1986, 8, 13),
+            email_address="alice.active@example.com",
+        )
+    )
+    setup_session.commit()
+    setup_session.close()
+
+    client = _membership_test_client(test_sessionmaker, monkeypatch)
+
+    response = client.post(
+        f"{MEMBERSHIPS_BASE_PATH}/activate",
+        json={
+            "customerId": "11111111-1111-1111-1111-111111111111",
+            "planId": "aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+            "signedByCustodian": False,
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["message"] == (
+        "Plan aaaaaa12-aaaa-aaaa-aaaa-aaaaaaaaaa12 was not found"
+    )
+    assert external_invoice_store.find_all() == []
+    assert email_service.sent_emails() == []
+
+    verification_session = test_sessionmaker()
+    assert verification_session.query(MembershipOrmModel).count() == 0
+    assert verification_session.query(MembershipBillingReferenceOrmModel).count() == 0
+    verification_session.close()
+    app.dependency_overrides.clear()
+
+
 def test_membership_list_memberships_returns_all_memberships(tmp_path: Path) -> None:
     test_sessionmaker = _membership_test_sessionmaker(
         tmp_path,
