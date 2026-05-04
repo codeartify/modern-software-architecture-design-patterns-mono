@@ -17,8 +17,10 @@ This workshop repository is provided under the [Codeartify Workshop License Agre
 │   ├── pom.xml
 │   └── src
 ├── requests
-│   ├── health.http
-│   └── store-demo.http
+│   ├── customer.http
+│   ├── external-invoice-provider.http
+│   ├── membership.http
+│   └── plan.http
 └── python
     ├── pyproject.toml
     ├── src
@@ -26,7 +28,29 @@ This workshop repository is provided under the [Codeartify Workshop License Agre
 ```
 
 ## Workshop Exercise Structure
-The `E00` to `E06` prefixes are intentional. In production many types would have simpler names, but in this workshop repo the prefixes keep IDE search results clear when multiple architecture styles implement the same use case.
+
+Each workshop exercise lives on its own Git branch.
+
+Branches:
+
+- `main`
+- `exercise1`
+- `exercise1_solution`
+- `exercise2_solution`
+- `exercise3_solution`
+- `exercise3b_solution`
+- `exercise4_solution`
+- `exercise5_solution`
+
+Switch branches with:
+
+```bash
+git switch exercise1
+git switch exercise1_solution
+```
+
+The HTTP API shape stays intentionally stable across branches so the same
+request files can be used while comparing the implementations.
 
 ## Java
 
@@ -83,15 +107,10 @@ cd python
 uv run pytest
 ```
 
-Health endpoint:
-
-```text
-GET http://localhost:9090/health
-```
-
 ## HTTP Requests
 
-The repo includes a shared HTTP client request file in [`requests/health.http`](./modern-software-architecture-design-patterns-mono/requests/health.http) and environment definitions in [`requests/http-client.env.json`](./modern-software-architecture-design-patterns-mono/requests/http-client.env.json).
+The repo includes shared HTTP client request files in [`requests/`](./requests/)
+and environment definitions in [`requests/http-client.env.json`](./requests/http-client.env.json).
 
 Select the environment before running the request:
 
@@ -100,45 +119,37 @@ Select the environment before running the request:
 
 Useful request files:
 
-- [`requests/customer.http`](./modern-software-architecture-design-patterns-mono/requests/customer.http)
-- [`requests/plan.http`](./modern-software-architecture-design-patterns-mono/requests/plan.http)
-- [`requests/membership.http`](./modern-software-architecture-design-patterns-mono/requests/membership.http)
-- [`requests/external-invoice-provider.http`](./modern-software-architecture-design-patterns-mono/requests/external-invoice-provider.http)
+- [`requests/customer.http`](./requests/customer.http)
+- [`requests/plan.http`](./requests/plan.http)
+- [`requests/membership.http`](./requests/membership.http)
+- [`requests/external-invoice-provider.http`](./requests/external-invoice-provider.http)
 
 ## Main Business Story
 
-The main workshop reference flow is the membership lifecycle:
-
-`activate -> invoice open -> overdue suspension -> payment received -> reactivation`
-
-This story is intentionally implemented first in `exercise00_mixed` so later exercises can implement/refactor the same behavior into layered, hexagonal, vertical-slice, and richer domain-model variants.
-
 Main steps:
 
-1. Activate a membership with `POST /api/e00/memberships/activate`.
+1. Activate a membership with `POST /api/memberships/activate`.
 2. The system creates a membership immediately as `ACTIVE`.
 3. An external invoice is created in the external invoice provider with status `OPEN`.
 4. A local billing reference is stored so the membership service can reason about overdue and paid invoices later.
-5. If the invoice stays open past its due date, `POST /api/e00/memberships/suspend-overdue` suspends the membership for `NON_PAYMENT`.
-6. When payment is received, `POST /api/e00/memberships/payment-received` marks the billing reference as paid and may reactivate the membership if the period is still valid.
+5. An Email is sent out to the customer with the invoice details.
 
 How to replay it:
 
 1. Start either the Java app on `http://localhost:8080` or the Python app on `http://localhost:9090`.
-2. Select the matching `java` or `python` environment in [`requests/http-client.env.json`](./modern-software-architecture-design-patterns-mono/requests/http-client.env.json).
-3. Use [`requests/membership.http`](./modern-software-architecture-design-patterns-mono/requests/membership.http) for:
-   - listing memberships
-   - activating a membership
-   - suspending overdue memberships
-   - recording payment callbacks
-4. Use [`requests/external-invoice-provider.http`](./modern-software-architecture-design-patterns-mono/requests/external-invoice-provider.http) to inspect invoices or simulate payment with `mark-paid`.
-
-The Java application also seeds example customers, plans, memberships, and billing references in [`java/src/main/resources/data.sql`](./modern-software-architecture-design-patterns-mono/java/src/main/resources/data.sql) so the overdue and reactivation scenarios can be demonstrated immediately.
+2. Select the matching `java` or `python` environment in [
+   `requests/http-client.env.json`](./requests/http-client.env.json).
+3. Run `Create customer` in [`requests/customer.http`](./requests/customer.http). The response handler stores `customerId` for later requests.
+4. Run `Create plan` in [`requests/plan.http`](./requests/plan.http). The response handler stores `planId` for later requests.
+5. Run `Activate membership` in [`requests/membership.http`](./requests/membership.http). It uses the stored `customerId` and `planId`, then stores `membershipId`, `externalInvoiceId`, and `externalInvoiceReference`.
+6. Continue with [`requests/membership.http`](./requests/membership.http) to list memberships, suspend overdue memberships, and record payment callbacks.
+7. Use [`requests/external-invoice-provider.http`](./requests/external-invoice-provider.http) to inspect invoices or simulate payment with `mark-paid`.
 
 
 ## CI
 
-GitHub Actions runs both stacks on pushes to `main` and on pull requests via [`.github/workflows/ci.yml`](./modern-software-architecture-design-patterns-mono/.github/workflows/ci.yml).
+GitHub Actions runs both stacks on pushes to `main` and on pull requests via [
+`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
 
 - Java job: `mvn verify`
 - Python job: `uv sync --all-groups`, `uv run ruff check`, `uv run pytest`
