@@ -10,8 +10,10 @@ from workshop_api.fitness.business.application.activate_membership_input import 
 from workshop_api.fitness.business.application.customer_too_young_exception import (
     CustomerTooYoungException,
 )
-from workshop_api.fitness.business.application.errors import NotFoundError
 from workshop_api.fitness.business.application.membership_service import MembershipService
+from workshop_api.fitness.infrastructure.customer_not_found_exception import (
+    CustomerNotFoundException,
+)
 from workshop_api.fitness.infrastructure.customer_repository import CustomerRepository
 from workshop_api.fitness.infrastructure.database import get_db_session
 from workshop_api.fitness.infrastructure.external_invoice_provider_client import (
@@ -22,6 +24,7 @@ from workshop_api.fitness.infrastructure.membership_billing_reference_repository
     MembershipBillingReferenceRepository,
 )
 from workshop_api.fitness.infrastructure.membership_repository import MembershipRepository
+from workshop_api.fitness.infrastructure.plan_not_found_exception import PlanNotFoundException
 from workshop_api.fitness.infrastructure.plan_repository import PlanRepository
 from workshop_api.fitness.presentation.membership_schemas import (
     ActivateMembershipRequest,
@@ -127,7 +130,7 @@ async def activate_membership(
 
     try:
         result = await service.activate_membership(input_data)
-    except NotFoundError as error:
+    except (CustomerNotFoundException, PlanNotFoundException) as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(error),

@@ -12,11 +12,13 @@ from workshop_api.fitness.business.application.activate_membership_result import
 from workshop_api.fitness.business.application.customer_too_young_exception import (
     CustomerTooYoungException,
 )
-from workshop_api.fitness.business.application.errors import NotFoundError
 from workshop_api.fitness.business.domain.customer_activate_membership_email import (
     CustomerActivateMembershipEmail,
 )
 from workshop_api.fitness.infrastructure.customer_entity import CustomerOrmModel
+from workshop_api.fitness.infrastructure.customer_not_found_exception import (
+    CustomerNotFoundException,
+)
 from workshop_api.fitness.infrastructure.customer_repository import CustomerRepository
 from workshop_api.fitness.infrastructure.external_invoice_provider_client import (
     ExternalInvoiceProviderClient,
@@ -30,6 +32,7 @@ from workshop_api.fitness.infrastructure.membership_entity import (
     MembershipOrmModel,
 )
 from workshop_api.fitness.infrastructure.membership_repository import MembershipRepository
+from workshop_api.fitness.infrastructure.plan_not_found_exception import PlanNotFoundException
 from workshop_api.fitness.infrastructure.plan_repository import PlanRepository
 
 
@@ -58,11 +61,13 @@ class MembershipService:
     ) -> ActivateMembershipResult:
         customer = self.customer_repository.find_by_id(input_data.customer_id)
         if customer is None:
-            raise NotFoundError(f"Customer {input_data.customer_id} was not found")
+            raise CustomerNotFoundException(
+                f"Customer {input_data.customer_id} was not found"
+            )
 
         plan = self.plan_repository.find_by_id(input_data.plan_id)
         if plan is None:
-            raise NotFoundError(f"Plan {input_data.plan_id} was not found")
+            raise PlanNotFoundException(f"Plan {input_data.plan_id} was not found")
 
         start_date = date.today()
         end_date = self._plus_months(start_date, plan.duration_in_months)
