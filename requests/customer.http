@@ -4,9 +4,9 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "name": "Oliver Zihler",
-  "dateOfBirth": "1998-08-13",
-  "emailAddress": "ozihlewwwwrw1@gmail.com"
+  "name": "Test Customer",
+  "dateOfBirth": "1980-08-09",
+  "emailAddress": "test@gmail.com"
 }
 
 > {%
