@@ -1,6 +1,6 @@
 package com.workshop.architecture.fitness.hexagon.inside;
 
-import com.workshop.architecture.fitness.hexagon.inside.port.inbound.ActivateMembership;
+import com.workshop.architecture.fitness.hexagon.inside.port.inbound.ForActivatingMemberships;
 import com.workshop.architecture.fitness.hexagon.inside.port.inbound.ActivateMembershipInput;
 import com.workshop.architecture.fitness.hexagon.inside.port.inbound.ActivateMembershipResult;
 import com.workshop.architecture.fitness.hexagon.inside.port.outbound.*;
@@ -14,7 +14,7 @@ import java.time.Period;
 import java.util.UUID;
 
 @Service
-public class MembershipService implements ActivateMembership {
+public class MembershipService implements ForActivatingMemberships {
     private final ForFindingCustomers forFindingCustomers;
     private final ForFindingPlans forFindingPlans;
     private final ForStoringMemberships forStoringMemberships;

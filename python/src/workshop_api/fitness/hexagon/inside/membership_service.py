@@ -7,7 +7,7 @@ from workshop_api.fitness.hexagon.inside.customer_too_young_exception import (
     CustomerTooYoungException,
 )
 from workshop_api.fitness.hexagon.inside.port.inbound.activate_membership import (
-    ActivateMembership,
+    ForActivatingMemberships,
 )
 from workshop_api.fitness.hexagon.inside.port.inbound.activate_membership_input import (
     ActivateMembershipInput,
@@ -45,7 +45,7 @@ from workshop_api.fitness.hexagon.inside.port.outbound.membership_invoice_detail
 )
 
 
-class MembershipService(ActivateMembership):
+class MembershipService(ForActivatingMemberships):
     def __init__(
         self,
         for_finding_customers: ForFindingCustomers,

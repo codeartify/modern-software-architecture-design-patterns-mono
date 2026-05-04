@@ -9,7 +9,7 @@ from workshop_api.fitness.hexagon.inside.customer_too_young_exception import (
 )
 from workshop_api.fitness.hexagon.inside.membership_service import MembershipService
 from workshop_api.fitness.hexagon.inside.port.inbound.activate_membership import (
-    ActivateMembership,
+    ForActivatingMemberships,
 )
 from workshop_api.fitness.hexagon.inside.port.inbound.activate_membership_input import (
     ActivateMembershipInput,
@@ -69,7 +69,7 @@ def get_activate_membership(
     session: Session = Depends(get_db_session),
     external_invoice_provider_base_url: str = Depends(get_external_invoice_provider_base_url),
     billing_sender_email_address: str = Depends(get_billing_sender_email_address),
-) -> ActivateMembership:
+) -> ForActivatingMemberships:
     return MembershipService(
         for_finding_customers=SqlAlchemyCustomerRepository(CustomerRepository(session)),
         for_finding_plans=SqlAlchemyPlanRepository(PlanRepository(session)),
@@ -121,7 +121,7 @@ async def get_membership(
 )
 async def activate_membership(
     activation_request: ActivateMembershipRequest,
-    use_case: ActivateMembership = Depends(get_activate_membership),
+    for_activating_memberships: ForActivatingMemberships = Depends(get_activate_membership),
 ) -> ActivateMembershipResponse:
     input_data = ActivateMembershipInput(
         activation_request.customer_id,
@@ -130,7 +130,7 @@ async def activate_membership(
     )
 
     try:
-        result = await use_case.activate_membership(input_data)
+        result = await for_activating_memberships.activate_membership(input_data)
     except (CustomerNotFoundException, PlanNotFoundException) as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

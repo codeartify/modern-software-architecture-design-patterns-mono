@@ -1,8 +1,5 @@
 package com.workshop.architecture.fitness.hexagon.inside.port.inbound;
 
-import jakarta.transaction.Transactional;
-
-public interface ActivateMembership {
-    @Transactional
+public interface ForActivatingMemberships {
     ActivateMembershipResult activateMembership(ActivateMembershipInput input);
 }

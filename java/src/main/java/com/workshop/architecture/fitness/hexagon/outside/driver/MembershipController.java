@@ -1,8 +1,8 @@
 package com.workshop.architecture.fitness.hexagon.outside.driver;
 
+import com.workshop.architecture.fitness.hexagon.inside.port.inbound.ForActivatingMemberships;
 import com.workshop.architecture.fitness.layered.infrastructure.MembershipEntity;
 import com.workshop.architecture.fitness.layered.infrastructure.MembershipRepository;
-import com.workshop.architecture.fitness.hexagon.inside.port.inbound.ActivateMembership;
 import com.workshop.architecture.fitness.hexagon.inside.port.inbound.ActivateMembershipInput;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -18,14 +18,14 @@ import java.util.UUID;
 public class MembershipController {
 
     private final MembershipRepository membershipRepository;
-    private final ActivateMembership activateMembership;
+    private final ForActivatingMemberships forActivatingMemberships;
 
     public MembershipController(
             MembershipRepository membershipRepository,
-            ActivateMembership activateMembership
+            ForActivatingMemberships forActivatingMemberships
     ) {
         this.membershipRepository = membershipRepository;
-        this.activateMembership = activateMembership;
+        this.forActivatingMemberships = forActivatingMemberships;
     }
 
     @GetMapping
@@ -52,7 +52,7 @@ public class MembershipController {
 
         var input = new ActivateMembershipInput(request.customerId(), request.planId(), request.signedByCustodian());
 
-        var result = activateMembership.activateMembership(input);
+        var result = forActivatingMemberships.activateMembership(input);
         
         return new ActivateMembershipResponse(
                 result.membershipId(),

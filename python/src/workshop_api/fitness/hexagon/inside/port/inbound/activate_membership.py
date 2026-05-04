@@ -8,7 +8,7 @@ from workshop_api.fitness.hexagon.inside.port.inbound.activate_membership_result
 )
 
 
-class ActivateMembership(Protocol):
+class ForActivatingMemberships(Protocol):
     async def activate_membership(
         self,
         input_data: ActivateMembershipInput,
