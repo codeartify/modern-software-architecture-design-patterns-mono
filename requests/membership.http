@@ -44,7 +44,7 @@ Accept: application/json
 }
 
 ### Resume paused membership
-POST {{baseUrl}}/api/memberships/{{seededPausedMembershipId}}/resume
+POST {{baseUrl}}/api/memberships/{{membershipId}}/resume
 Content-Type: application/json
 Accept: application/json
 
@@ -105,25 +105,4 @@ Accept: application/json
 {
   "externalInvoiceReference": "{{externalInvoiceReference}}",
   "paidAt": "2026-06-15T10:00:00Z"
-}
-
-### Demo: reactivate seeded suspended membership after payment
-POST {{baseUrl}}/api/memberships/payment-received
-Content-Type: application/json
-Accept: application/json
-
-{
-  "externalInvoiceId": "{{seededSuspendedExternalInvoiceId}}",
-  "externalInvoiceReference": "{{seededSuspendedExternalInvoiceReference}}",
-  "membershipId": "{{seededSuspendedNonPaymentMembershipId}}",
-  "paidAt": "2026-06-15T10:00:00Z"
-}
-
-### Demo: mark seeded active-overdue membership for suspension
-POST {{baseUrl}}/api/memberships/suspend-overdue
-Content-Type: application/json
-Accept: application/json
-
-{
-  "checkedAt": "2026-06-15T10:00:00Z"
 }
